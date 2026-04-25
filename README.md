@@ -1,7 +1,5 @@
 # goscout
 
-Личная система обучения: Go + AppSec + сетевая безопасность.
-
 ## Структура
 
 ```
@@ -12,9 +10,3 @@ networking/       — сетевые проекты
 security/         — AppSec проекты
 crypto/           — крипто-инструменты
 ```
-
-## Вектор
-
-Go → AppSec → Security Tools Developer
-
-Якорные проекты: HTTP Security Scanner → Network Security Monitor
