@@ -1,7 +1,5 @@
 # goscout
 
-## Структура
-
 ```
 .claude/          — инструкции для Claude Code (CLAUDE.md, скиллы, стратегия)
 knowledge-base/   — Obsidian vault: задачи, топики, мок-собесы
