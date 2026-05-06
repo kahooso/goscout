@@ -54,13 +54,12 @@ func countByMessage(logs []LogEntry) map[string]int {
 
 func countByLevel(logs []LogEntry) map[string]int {
 	m := make(map[string]int)
-	// A: make — встроенная функция для трёх типов: slice, map, channel. Полиморфная.
-	// Параметры для каждого типа свои, и компилятор проверяет — неправильные дадут
-	// ошибку компиляции, не панику.
-	//   make([]T, len, cap)       — slice: len обязателен, cap опционален
-	//   make(map[K]V)             — map: параметр опционален (начальный размер хранилища)
-	//   make(chan T, bufSize)      — channel: bufSize=0 или пусто → unbuffered
-	// Смешивать параметры нельзя: make(map[string]int, 0, 10) — ошибка компиляции.
+	// A: make — встроенная полиморфная функция, работает для трёх типов: slice, map, channel.
+	// Параметры у каждого типа свои, компилятор проверяет их на этапе компиляции.
+	// make([]T, len, cap) — slice: len элементов заполненных нулём, cap зарезервировано.
+	// make(map[K]V, hint) — map: hint задаёт начальную ёмкость (опционально).
+	// make(chan T, buf)    — channel: buf = 0 → unbuffered, buf > 0 → буферизованный.
+	// Если вставить неправильные параметры — ошибка компиляции, не паника.
 
 	for _, l := range logs {
 		m[l.Level]++
@@ -70,31 +69,30 @@ func countByLevel(logs []LogEntry) map[string]int {
 }
 
 func topMessages(mTop map[string]int, n int) []string {
-	top := make([]string, 0, len(mTop)) // УЛУЧШЕНИЕ: var top []string = make(...) — C-стиль; в Go просто :=
+	top := make([]string, 0, len(mTop))
 	for k := range mTop {
 		top = append(top, k)
 	}
-	// A: В Go всё camelCase. snake_case и ALL_CAPS — не принято (C/Python стиль).
-	//   m, v, k     — нормально в коротком scope (тело цикла, 3-5 строк)
-	//   mTop        — хорошо для параметра функции: коротко и понятно
-	//   messages    — хорошо для переменной в main: читаемо
-	// Экспортируемое (доступно снаружи пакета): CamelCase с большой буквы — LogEntry, ParseLogs.
-	// Приватное (только внутри пакета): camelCase с маленькой — csvLog, countByLevel.
+	// A: В Go только camelCase — ни snake_case, ни ALL_CAPS.
+	// Экспортируемое (публичное) → MTop; приватное → mTop.
+	// Короткие имена (m, l, i, v) нормальны в маленьком скоупе — это идиома Go, не лень.
+	// В широком скоупе — описательное: mTop понятнее чем m, потому что map не одна.
 
 	sort.Slice(top, func(i, j int) bool {
 		return mTop[top[i]] > mTop[top[j]]
 	})
-	// A: sort.Slice(logs, ...) можно, но тогда возвращать []LogEntry, а не []string.
-	// Текущий подход (ключи из mTop) чище: функция возвращает именно строки-сообщения,
-	// а данные о частоте уже есть у вызывающего (mTop передан снаружи).
+	// A: Можно сортировать []LogEntry по Message полю — но тогда нужно после сортировки
+	// извлекать Message из каждого LogEntry. Сложнее и дублируем сообщения.
+	// Текущий подход — итерируем ключи из map — проще: ключи уже уникальные строки,
+	// счётчики доступны через mTop, слайс готов к возврату без дополнительного маппинга.
 
 	if n > len(top) {
 		return top
 	}
 	return top[:n]
-	// A: Правильно. top[:n] возвращает новый заголовок {ptr: тот же, len: n, cap: len(top)}.
-	// Данные не копируются — оба слайса указывают на один массив в heap.
-	// Изменение элементов через возвращённый срез было бы видно в top и наоборот.
+	// В данном случае, я как бы возвращаю срез слайса
+	// Получается, что мой слайс в main будет ссылаться
+	// не на весь слайс top, а только от 0 до n элементов.
 }
 
 func main() {
