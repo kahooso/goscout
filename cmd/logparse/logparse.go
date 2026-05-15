@@ -1,3 +1,6 @@
+// task-03 (A0.2-bis): CSV-логи — парсинг, агрегация, топ-N.
+// Учебная реализация — в проде использовать encoding/csv.
+// Разбор: knowledge-base/topics/go/slices-maps.md
 package main
 
 import (
@@ -17,12 +20,6 @@ var csvLog = []string{
 
 const csvSep = ","
 
-// A: В Go одиночные кавычки '' — это rune-литерал (один символ, тип int32), не строка.
-// Для строк только два варианта:
-//   "строка"  — интерпретируемая: понимает \n, \t, \"
-//   `строка`  — raw string: \n это буквально два символа \ и n, без escape.
-// Raw строки удобны для регулярок — не нужно экранировать \d, \w и т.д.
-
 type LogEntry struct {
 	Timestamp string
 	Level     string
@@ -32,14 +29,14 @@ type LogEntry struct {
 func parseLogs(lines []string) []LogEntry {
 	logs := make([]LogEntry, len(lines))
 	for i, v := range lines {
-		temp := strings.Split(v, csvSep)
+		parts := strings.Split(v, csvSep)
+		// TODO(post-A0.6): len(parts) < 3 → возвращать ошибку, не молча индексировать
 		logs[i] = LogEntry{
-			Timestamp: temp[0],
-			Level:     temp[1],
-			Message:   temp[2],
+			Timestamp: parts[0],
+			Level:     parts[1],
+			Message:   parts[2],
 		}
 	}
-
 	return logs
 }
 
@@ -48,51 +45,29 @@ func countByMessage(logs []LogEntry) map[string]int {
 	for _, l := range logs {
 		m[l.Message]++
 	}
-
 	return m
 }
 
 func countByLevel(logs []LogEntry) map[string]int {
 	m := make(map[string]int)
-	// A: make — встроенная полиморфная функция, работает для трёх типов: slice, map, channel.
-	// Параметры у каждого типа свои, компилятор проверяет их на этапе компиляции.
-	// make([]T, len, cap) — slice: len элементов заполненных нулём, cap зарезервировано.
-	// make(map[K]V, hint) — map: hint задаёт начальную ёмкость (опционально).
-	// make(chan T, buf)    — channel: buf = 0 → unbuffered, buf > 0 → буферизованный.
-	// Если вставить неправильные параметры — ошибка компиляции, не паника.
-
 	for _, l := range logs {
 		m[l.Level]++
 	}
-
 	return m
 }
 
-func topMessages(mTop map[string]int, n int) []string {
-	top := make([]string, 0, len(mTop))
-	for k := range mTop {
-		top = append(top, k)
+func topMessages(messages map[string]int, n int) []string {
+	keys := make([]string, 0, len(messages))
+	for k := range messages {
+		keys = append(keys, k)
 	}
-	// A: В Go только camelCase — ни snake_case, ни ALL_CAPS.
-	// Экспортируемое (публичное) → MTop; приватное → mTop.
-	// Короткие имена (m, l, i, v) нормальны в маленьком скоупе — это идиома Go, не лень.
-	// В широком скоупе — описательное: mTop понятнее чем m, потому что map не одна.
-
-	sort.Slice(top, func(i, j int) bool {
-		return mTop[top[i]] > mTop[top[j]]
+	sort.Slice(keys, func(i, j int) bool {
+		return messages[keys[i]] > messages[keys[j]]
 	})
-	// A: Можно сортировать []LogEntry по Message полю — но тогда нужно после сортировки
-	// извлекать Message из каждого LogEntry. Сложнее и дублируем сообщения.
-	// Текущий подход — итерируем ключи из map — проще: ключи уже уникальные строки,
-	// счётчики доступны через mTop, слайс готов к возврату без дополнительного маппинга.
-
-	if n > len(top) {
-		return top
+	if n > len(keys) {
+		return keys
 	}
-	return top[:n]
-	// В данном случае, я как бы возвращаю срез слайса
-	// Получается, что мой слайс в main будет ссылаться
-	// не на весь слайс top, а только от 0 до n элементов.
+	return keys[:n]
 }
 
 func main() {
@@ -101,15 +76,14 @@ func main() {
 	messages := countByMessage(logs)
 	top := topMessages(messages, 1)
 
-	fmt.Print("Уровни:\n")
+	fmt.Println("Уровни:")
 	for k, v := range levels {
 		fmt.Printf("%s\t: %d\n", k, v)
 	}
 	fmt.Println()
 
-	fmt.Print("Топ сообщений:\n")
+	fmt.Println("Топ сообщений:")
 	for _, v := range top {
 		fmt.Printf("%s\t: %d\n", v, messages[v])
 	}
-	fmt.Println()
 }
