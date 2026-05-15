@@ -27,6 +27,7 @@ vendor/
 
 # Claude Code локальные настройки (личные, не для репо)
 .claude/settings.local.json
+.claude/settings.json
 
 # OS
 .DS_Store
