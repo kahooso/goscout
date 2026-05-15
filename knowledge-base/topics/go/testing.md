@@ -1,13 +1,18 @@
-# Пакет testing
+# Пакет `testing`
 
-## Что это
+## TL;DR
 
-Встроенный пакет для написания тестов. Тесты запускаются через `go test`, не входят в бинарник.
-В C/C++ тесты требуют внешних фреймворков (Google Test, Unity). В Go — ничего внешнего.
+Стандартный пакет для тестов. Файлы `*_test.go` рядом с кодом, функции
+`func TestXxx(t *testing.T)` запускаются через `go test`. В C/C++ нужен внешний
+фреймворк, в Go всё встроено.
 
-## Как работает
+## Где разобрано подробно
 
-### Структура тест-файла
+- `pkg.go.dev/testing` — справочник API
+- `gobyexample.com/testing-and-benchmarking` — минимальные примеры
+- Видео Николая Тузова: «Генерация и использование моков в Go / Mockery» (моки — продвинутая тема)
+
+## Структура тест-файла
 
 ```go
 // logparse_test.go — суффикс _test.go обязателен
@@ -23,144 +28,141 @@ func TestCountByLevel(t *testing.T) {
 Go компилирует `*_test.go` только для `go test` — отдельный бинарник, не входит в `go build`.
 Функция теста: `TestXxx(t *testing.T)` — обязательно с заглавной буквы после `Test`.
 
-### testing.T — это struct, не интерфейс
+## `*testing.T` — основные методы
 
-`*testing.T` — указатель на структуру. Методы через него меняют внутреннее состояние теста
-(отмечают провал, пишут лог). Поэтому передаётся именно `*T`, а не `T`.
+| Метод | Когда |
+|-------|-------|
+| `t.Errorf(format, args)` | провал, но идём дальше — следующие assertions выполнятся |
+| `t.Fatalf(format, args)` | провал и сразу `runtime.Goexit()` — для случаев когда дальше тестировать бессмысленно (nil pointer впереди) |
+| `t.Run(name, func(*T))` | подтест — отдельная строка в выводе, можно запускать отдельно |
+| `t.Helper()` | вызвать в начале helper-функции — ошибка показывает строку вызывающего |
+| `t.Parallel()` | запустить параллельно с другими `t.Parallel()` тестами |
+| `t.Cleanup(func())` | действие при завершении теста (закрыть файл, восстановить env) |
+| `t.Skip(reason)` | пропустить тест условно |
+| `t.Logf(format, args)` | лог, показывается только при `-v` или провале |
 
-### Основные методы t
+**`Fatalf` — не паника.** `panic()` нужно recover'ить; `Fatalf` — управляемая остановка
+через `runtime.Goexit()`: следующие тесты продолжают работать.
 
+**Сообщение всегда содержит `got` и `want`:**
 ```go
-t.Errorf("got %v, want %v", got, want)
-// тест помечен провален, выполнение продолжается
-
-t.Fatalf("got %v, want %v", got, want)
-// тест помечен провален, функция останавливается через runtime.Goexit()
+t.Errorf("got %v, want %v", got, want)   // правильно
+t.Errorf("неправильно!")                  // бесполезно
 ```
 
-`Fatalf` — **не паника**. `panic()` нужно recover'ить. `Fatalf` — управляемая остановка
-через `runtime.Goexit()`: тест завершается чисто, следующие тесты продолжают работать.
-
-`Errorf` — когда проверки независимы. `Fatalf` — когда дальше нет смысла (nil вместо слайса и т.п.).
-
-**Сообщение всегда должно содержать got и want:**
-```go
-t.Errorf("got %v, want %v", got, tc.want)  // правильно
-t.Errorf("не правильно!")                  // бесполезно — при провале ничего не видно
-```
-
-### t.Log / t.Logf
+## Table-driven — главная идиома
 
 ```go
-t.Logf("промежуточное значение: %v", got)
-```
-
-Печатается только если:
-- тест **провален** (всегда показывается)
-- запущен с флагом **`-v`** (явно попросил подробности)
-
-Удобно для отладки: добавил лог, посмотрел с `-v`, убрал.
-
-### Table-driven pattern — главная идиома
-
-```go
-func TestCountByLevel(t *testing.T) {
+func TestPop(t *testing.T) {
     tests := []struct {
-        name string
-        logs []LogEntry
-        want map[string]int
+        name      string
+        input     []int   // что было в стеке ДО Pop
+        wantVal   int
+        wantOk    bool
+        wantAfter []int   // что стало в стеке ПОСЛЕ Pop
     }{
-        {
-            name: "три уровня",
-            logs: []LogEntry{{Level: "INFO"}, {Level: "ERROR"}, {Level: "INFO"}},
-            want: map[string]int{"INFO": 2, "ERROR": 1},
-        },
-        {
-            name: "пустой вход",
-            logs: []LogEntry{},
-            want: map[string]int{},
-        },
+        {name: "обычный pop",  input: []int{1, 2, 5, 7}, wantVal: 7, wantOk: true, wantAfter: []int{1, 2, 5}},
+        {name: "пустой стек",  input: []int{},          wantVal: 0, wantOk: false, wantAfter: []int{}},
+        {name: "один элемент", input: []int{42},        wantVal: 42, wantOk: true, wantAfter: []int{}},
     }
-
     for _, tc := range tests {
         t.Run(tc.name, func(t *testing.T) {
-            got := countByLevel(tc.logs)
-            if !reflect.DeepEqual(got, tc.want) {
-                t.Errorf("got %v, want %v", got, tc.want)
+            s := &Stack{items: tc.input}
+            gotVal, gotOk := s.Pop()
+            if gotVal != tc.wantVal || gotOk != tc.wantOk {
+                t.Errorf("Pop() = (%v, %v), want (%v, %v)", gotVal, gotOk, tc.wantVal, tc.wantOk)
+            }
+            if !reflect.DeepEqual(s.items, tc.wantAfter) {
+                t.Errorf("state = %v, want %v", s.items, tc.wantAfter)
             }
         })
     }
 }
 ```
 
-### t.Run — подтесты
-
-`t.Run(name, func(t *testing.T))` запускает подтест с именем и **отдельным** `t`.
-
-Зачем отдельный `t` внутри: если вызвать `t.Fatalf` внутри подтеста — останавливается
-только он. Внешний цикл продолжается, остальные кейсы запустятся.
-Без `t.Run` — `Fatalf` остановит весь `TestXxx` после первого провала.
-
-Правило: **все параметры кейса должны быть полями структуры**, включая `n`, `timeout` и т.п.
-
+**Правило:** все параметры кейса — поля структуры. Никаких хардкодов:
 ```go
-// плохо — n захардкожен, нельзя варьировать по кейсам
+// плохо
 got := topMessages(tc.top, 2)
 
 // хорошо — n в структуре
-tests := []struct {
-    name string
-    top  map[string]int
-    n    int        // ← поле
-    want []string
-}{ ... }
 got := topMessages(tc.top, tc.n)
 ```
 
-### Сравнение map — reflect.DeepEqual
+## Сравнение слайсов / мэпов
 
-Map нельзя сравнить через `==` — ошибка компиляции. Нужен `reflect.DeepEqual`:
-
+Через `==` нельзя (compile error для слайсов, identity для указателей у мэпов). Только `reflect.DeepEqual`:
 ```go
 import "reflect"
-
 if !reflect.DeepEqual(got, want) {
     t.Errorf("got %v, want %v", got, want)
 }
 ```
 
-Важно: `map[string]int{}` (пустая) и `map[string]int(nil)` — **разные** значения для `DeepEqual`.
-Если функция возвращает `make(map[string]int)` — сравнивать с `map[string]int{}`, не с nil.
+Важно: `map[string]int{}` (пустая) ≠ `map[string]int(nil)` для `DeepEqual`. Если функция
+возвращает `make(map[string]int)` — сравнивать с `map[string]int{}`, не с nil.
+
+## Стандарт тестов в этом проекте
+
+Минимум **3 кейса** на каждую функцию:
+1. **Happy path** — обычный валидный ввод
+2. **Граничный** — пустой, nil, размер 1, max
+3. **Злой** — мусор, паника-кейс, граница
+
+Для concurrency-кода — обязательный `go test -race`.
 
 ## Запуск
 
 ```bash
-go test ./cmd/logparse/                          # тихий (только PASS/FAIL)
-go test -v ./cmd/logparse/                       # подробный (все t.Run с именами)
-go test -run TestCountByLevel ./cmd/logparse/    # только эта функция
-go test -run TestCountByLevel/пустой_вход ./...  # только этот подтест (пробел → _)
-go test ./...                                    # все тесты в модуле
+go test ./...                                    # все тесты
+go test -v ./cmd/pointers                        # подробный вывод
+go test -run TestPop ./cmd/pointers              # только TestPop
+go test -run TestPop/пустой_стек ./cmd/pointers  # подтест (пробел → _)
+go test -race ./...                              # детектор гонок (для concurrency)
+go test -cover ./...                             # покрытие в процентах
 ```
 
-Форматирование тест-файлов — тем же `gofmt`:
+Форматирование:
 ```bash
-gofmt -w cmd/logparse/   # перезаписать с правильным форматированием
-gofmt -l cmd/logparse/   # только показать какие файлы неправильно отформатированы
+gofmt -l cmd/pointers/   # показать неправильно отформатированные
+gofmt -w cmd/pointers/   # перезаписать с правильным
 ```
 
-## Другие типы тестов (для справки — будет позже)
+## Личный опыт
 
-- `testing.B` — бенчмарки: `BenchmarkXxx(b *testing.B)`, запуск через `go test -bench=.`
+### Что я понял не сразу
+
+- **`t.Errorf` vs `t.Fatalf`.** `Errorf` записывает провал и идёт дальше. `Fatalf` —
+  останавливает subtest. Использовать `Fatalf` когда следующие проверки зависят от
+  предыдущей (проверили `cfg != nil`, иначе `cfg.Host` → паника).
+- **`reflect.DeepEqual` обязателен** для слайсов/мэпов. `==` либо не компилируется,
+  либо сравнивает по указателю (не по содержимому).
+- **Поле теста `input` ≠ `want`.** Если test struct использует одно поле и для входа
+  и для ожидания — тест становится тавтологией (положили `want`, проверили `want`).
+- **Без `t.Run` теряются имена кейсов.** В выводе будет только «FAIL: TestPop»
+  без указания какой кейс упал.
+
+### На чём попадался
+
+- task-03 (`TestPush`): использовал `tc.want` как input — тест проходил всегда,
+  потому что клал в стек ровно то что потом проверял (это **до сих пор** в коде, см. `cmd/pointers/pointers_test.go`)
+- task-05: написал `int64(0)` и `int64(3)` в литералах test struct — лишний каст, тип выводится
+- task-06: `func(s string)` где `s` не используется — должно быть `func(_ string)`
+- task-05: проверка `tc.err == errors.New("...")` всегда `false` — каждый вызов `errors.New`
+  создаёт новый объект. Сравнивать через `errors.Is`
+
+### Подводные камни
+
+- Файл должен быть `*_test.go` (с подчёркиванием) — иначе `go test` не увидит
+- Функция должна начинаться с `Test` + большая буква (`TestFoo`, не `Testfoo`)
+- `reflect.DeepEqual(nil, []int{})` → `false` — nil-slice и пустой slice не равны
+- Запуск без `-race` для concurrency-кода — гонки не отловятся, но в проде упадут
+
+## Другие виды тестов (для справки — освоим позже)
+
+- `testing.B` — бенчмарки: `BenchmarkXxx(b *testing.B)`, запуск `go test -bench=.`
 - `testing.F` — fuzzing: автоматическая генерация входных данных для поиска паник
-
-## Подводные камни
-
-- `t.Errorf("не правильно!")` — при провале ничего не видно. Всегда включать `got` и `want`.
-- `*_test.go` с объявленными но неиспользуемыми переменными → ошибка компиляции (`go vet`)
-- `map` нельзя сравнить через `==` — нужен `reflect.DeepEqual`
-- Параметры конкретного кейса должны быть полями struct — не хардкодить в вызове функции
-- `t.Fatalf` — не паника, `runtime.Goexit()`. Другие тесты продолжат работать.
 
 ## Связанные темы
 
-[[slices-maps]] [[structs]] [[interfaces]]
+[[slices-maps]] [[errors]] [[goroutines]]

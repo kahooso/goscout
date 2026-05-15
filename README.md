@@ -1,60 +1,72 @@
 # goscout
 
-Учебный репозиторий для подготовки к роли **AppSec инженера / Security Go developer**.
-Связка Claude Code + Obsidian как обучающая среда: Claude ведёт по плану, Obsidian хранит конспекты.
+Учебный репозиторий + якорный проект для подготовки к **AppSec инженеру / Security Go developer**.
+Связка Claude Code + Obsidian как обучающая среда: Claude ведёт по плану, Obsidian хранит конспекты,
+`cmd/goscout/` — реальный инструмент который растёт с каждой задачей.
 
 ## Цель
 
-К концу 3 курса (лето–осень 2028) — junior-оффер в Positive Technologies, Bi.Zone, Яндекс Безопасность или Kaspersky.
-Промежуточная цель этапа 1 (конец 2026) — рабочий **HTTP Security Scanner на Go**.
+- **2026:** `goscout` v0.1 с командами `dns` + `ports`, тесты + CI
+- **2027:** стажировка AppSec / Security Go (Positive Technologies, Bi.Zone, Яндекс, Kaspersky)
+- **2028:** junior-оффер
+
+## `goscout` — якорный проект
+
+Сетевой scout, CLI инструмент:
+
+```bash
+go run ./cmd/goscout dns example.com google.com   # параллельный DNS (A0.6)
+go run ./cmd/goscout ports example.com            # TCP scan (A0.9)
+go run ./cmd/goscout http example.com             # HTTP probe (post-A0)
+go run ./cmd/goscout --version
+```
+
+Каждая фича добавляется когда нужная тема пройдена — см. [cmd/goscout/README.md](cmd/goscout/README.md).
 
 ## Структура
 
 ```
 goscout/
-├── go.mod                 — единый Go модуль github.com/kahooso/goscout
-├── cmd/                   — исполняемые CLI-инструменты, по одному на бинарник
-│   ├── structs/           — task-01: тип Task с методами (A0.1)
-│   └── collections/       — task-02: счётчик слов (A0.2)
+├── go.mod                — модуль github.com/kahooso/goscout
+├── .github/workflows/    — CI: go vet + go test -race на push
+├── .gitignore            — .exe, .obsidian, vendor и т.д.
 │
-├── knowledge-base/        — Obsidian vault: теория и журнал задач
-│   ├── 00-roadmap.md      — журнал выполненных задач
-│   ├── tasks/             — разбор каждого задания (опыт, ошибки, рефлексия)
-│   ├── topics/            — концепции с [[wikilinks]]
-│   │   ├── _index.md      — карта всех тем (MOC)
-│   │   ├── go/            — Go: пакеты, паттерны, идиомы
-│   │   ├── networks/      — сетевой стек, протоколы (наполнится в блоке C)
-│   │   └── security/      — AppSec: уязвимости, атаки, защита (наполнится в блоке B)
-│   └── interviews/        — мок-собесы каждые ~8 задач
+├── cmd/                  — исполняемые бинарники
+│   ├── goscout/          — якорный проект (см. cmd/goscout/README.md)
+│   ├── structs/          — task-01 (A0.1) — артефакт
+│   ├── collections/      — task-02 (A0.2) — артефакт
+│   ├── logparse/         — task-03 (A0.2-bis) — артефакт
+│   ├── pointers/         — task-04 (A0.3) — артефакт
+│   ├── errors-demo/      — task-05 (A0.4) — артефакт
+│   └── goroutines/       — task-06 (A0.5) — артефакт
 │
-└── .claude/               — инструкции для Claude Code
-    ├── CLAUDE.md          — мастер-контекст (загружается автоматически)
-    ├── strategy/          — учебный план и карьерная стратегия
-    ├── skills/            — поведение Claude в конкретных ситуациях
-    └── templates/         — шаблоны новых файлов
+├── knowledge-base/       — Obsidian vault
+│   ├── 00-roadmap.md     — журнал задач
+│   ├── tasks/            — разбор каждого задания (опыт, ошибки)
+│   ├── topics/           — концепции с [[wikilinks]]
+│   │   ├── _index.md     — карта всех тем
+│   │   └── go/           — Go: пакеты, идиомы, личный опыт
+│   └── interviews/       — мок-собесы каждые ~8 задач
+│
+└── .claude/              — инструкции для Claude Code
+    ├── CLAUDE.md         — мастер-контекст (загружается автоматически)
+    ├── skills/           — реакции на конкретные триггеры
+    ├── strategy/         — учебный план
+    └── templates/        — шаблоны
 ```
-
-Папки `cmd/scanner/`, `topics/networks/`, `topics/security/` появятся когда дойдём до соответствующих блоков плана.
-
-## Текущий статус
-
-- **Этап:** 1 (фундамент)
-- **Блок:** A0 — Go фундамент
-- **Готово:** A0.1 (структуры), A0.2 (слайсы и мэпы) — закрепление в работе
-- **Подробности:** [`learning-strategy.md`](.claude/strategy/learning-strategy.md) → раздел «Текущая позиция»
 
 ## Запуск
 
 ```bash
-go run ./cmd/structs
-go run ./cmd/collections
-go test ./...
-go vet ./...
+go test -race ./...   # все тесты с детектором гонок
+go vet ./...          # статический анализ
+go run ./cmd/goscout  # якорный проект
 ```
 
 ## Как читать репозиторий
 
-- Чтобы понять **где сейчас идёт обучение** — `.claude/strategy/learning-strategy.md`.
-- Чтобы понять **как устроен учебный процесс** — `.claude/CLAUDE.md` и скиллы рядом.
-- Чтобы посмотреть **разобранные темы** — `knowledge-base/topics/_index.md`.
-- Чтобы увидеть **какие задачи выполнены и с какими граблями** — `knowledge-base/tasks/`.
+- **Как работать со связкой Claude + проект** — [.claude/HOWTO.md](.claude/HOWTO.md) — шпаргалка
+- **Где сейчас идёт обучение** — [.claude/strategy/learning-strategy.md](.claude/strategy/learning-strategy.md) → «Текущая позиция»
+- **Как устроен учебный процесс** — [.claude/CLAUDE.md](.claude/CLAUDE.md) + скиллы рядом
+- **Разобранные темы** — [knowledge-base/topics/_index.md](knowledge-base/topics/_index.md)
+- **Выполненные задачи и грабли** — [knowledge-base/tasks/](knowledge-base/tasks/)

@@ -10,27 +10,31 @@
 | [[slices-maps]] — слайсы и мэпы | ✅ есть | task-02 |
 | [[strings-sort]] — пакеты strings и sort | ✅ есть | task-02 |
 | [[hash-table]] — хеш-таблица vs дерево | ✅ есть | task-02 (бонус) |
-| [[pointers]] — указатели в Go, value vs pointer receiver | 🔲 в плане | task-03 (A0.3) |
-| [[errors]] — `errors`, `fmt.Errorf`, `errors.Is/As` | 🔲 в плане | A0.4 |
-| [[goroutines]] — горутины, sync.WaitGroup | 🔲 в плане | A0.5 |
+| [[pointers]] — указатели, value vs pointer receiver | ✅ есть | task-04 |
+| [[errors]] — `errors`, `fmt.Errorf`, `errors.Is/As` | ✅ есть | task-05 |
+| [[goroutines]] — горутины, sync.WaitGroup | ✅ есть (новый формат) | task-06 |
+| [[testing]] — пакет `testing`, table-driven тесты | ✅ есть | task-03+ |
+| [[runtime]] — Go runtime, компиляция, stdlib | ✅ есть | сквозная |
 | [[channels]] — каналы, `select`, buffered/unbuffered | 🔲 в плане | A0.6 |
-| [[context]] — `context.WithTimeout` и lifecycle | 🔲 в плане | A0.7 |
-| [[interfaces]] — интерфейсы, неявная реализация | 🔲 в плане | A0.8 |
-| [[stdlib]] — `os`, `bufio`, ключевые пакеты | 🔲 в плане | A0.9 |
-| [[testing]] — пакет `testing`, table-driven тесты | ✅ есть | task-03 (теория), тесты в след. сессии |
+| [[context]] — `context.WithTimeout` и lifecycle | 🔲 в плане | A0.6 (вместе с каналами) |
+| [[interfaces]] — интерфейсы, неявная реализация | 🔲 в плане | A0.7 |
+| [[stdlib-cli]] — `os`, `bufio`, `flag` для CLI | 🔲 в плане | A0.8 |
+| [[net]] — `net.Dial`, `net.DialTimeout` | 🔲 в плане | A0.9 |
 
 ## Сети
 
-> Заполнится в блоке C. Сейчас: пусто.
+> Заполнится после A0. Сейчас: пусто.
 
 ## Безопасность
 
-> Заполнится в блоке B. Сейчас: пусто.
+> Заполнится после A0. Сейчас: пусто.
 
 ---
 
 ## Соглашения
 
-- Wikilink `[[name]]` ведёт на файл `<name>.md` в той же папке topics/<категория>/.
-- Если ссылка ведёт в файл который ещё не создан — это нормально, помечается 🔲.
+- Wikilink `[[name]]` ведёт на файл `<name>.md` в той же папке `topics/<категория>/`.
+- Если ссылка ведёт на ещё не созданный файл — это нормально, помечается 🔲.
 - Каждая тема рождается из конкретной задачи или вопроса — не пишем «впрок».
+- **Новый формат записи** (с goroutines.md и testing.md): TL;DR → ссылка на ресурсы → код → Личный опыт.
+  Старые файлы будут переписаны при возвращении к теме.
