@@ -36,6 +36,8 @@ goscout/
 │
 ├── cmd/                  — исполняемые бинарники, по одному на main.go
 │   ├── goscout/          — ЯКОРНЫЙ проект: сетевой scout (DNS/ports/HTTP probe)
+│   ├── tasks/<имя>/      — algo-практика (мини-задачи, package = имя, не main;
+│   │                       запускаются через `go test`, не `go run`)
 │   └── <учебные>/        — артефакты задач A0.1–A0.5 (structs/, collections/,
 │                           logparse/, pointers/, errors-demo/, goroutines/)
 │
