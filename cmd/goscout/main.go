@@ -8,22 +8,32 @@
 package main
 
 import (
+	"context"
 	"fmt"
+	"net"
 	"os"
+	"time"
 )
 
-const version = "0.0.1"
+type dnsResult struct {
+	domain string
+	addrs  []string
+	err    error
+}
 
-const usage = `goscout — сетевой scout.
+const (
+	version = "0.0.1"
+	usage   = `goscout — сетевой scout.
 
-Использование:
-  goscout dns <domain> [<domain>...]   параллельный DNS reconnaissance
-  goscout ports <host>                 TCP port scanner (заглушка)
-  goscout http <url>                   HTTP probe (заглушка)
-  goscout --version                    вывести версию
+	Использование:
+	goscout dns <domain> [<domain>...]   параллельный DNS reconnaissance
+	goscout ports <host>                 TCP port scanner (заглушка)
+	goscout http <url>                   HTTP probe (заглушка)
+	goscout --version                    вывести версию
 
-Подкоманды реализуются по мере прохождения тем — см. cmd/goscout/README.md.
-`
+	Подкоманды реализуются по мере прохождения тем — см. cmd/goscout/README.md.
+	`
+)
 
 func main() {
 	if len(os.Args) < 2 {
@@ -53,9 +63,34 @@ func runDNS(args []string) {
 		fmt.Fprintln(os.Stderr, "dns: нужен минимум один домен")
 		os.Exit(2)
 	}
-	// TODO(A0.6): параллельный resolve через горутины + каналы + context
-	fmt.Println("dns: not implemented yet (ждёт A0.6)")
-	fmt.Printf("домены для проверки: %v\n", args)
+
+	// A0.6 - параллельный resolve через горутины + каналы + context
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	ch := make(chan dnsResult, len(args))
+
+	for _, d := range args {
+		go resolveDomain(ctx, d, ch)
+	}
+
+	for range args {
+		select {
+		case res := <-ch:
+			if res.err != nil {
+				fmt.Printf("%v\n", res.err)
+				continue
+			}
+			fmt.Printf("%s -> %s\n", res.domain, res.addrs)
+		case <-ctx.Done():
+			return
+		}
+	}
+}
+
+func resolveDomain(ctx context.Context, domain string, ch chan dnsResult) {
+	addrs, err := net.DefaultResolver.LookupHost(ctx, domain)
+	ch <- dnsResult{addrs: addrs, domain: domain, err: err}
 }
 
 func runPorts(args []string) {
