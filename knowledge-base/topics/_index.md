@@ -15,8 +15,9 @@
 | [[goroutines]] — горутины, sync.WaitGroup | ✅ есть (новый формат) | task-06 |
 | [[testing]] — пакет `testing`, table-driven тесты | ✅ есть | task-03+ |
 | [[runtime]] — Go runtime, компиляция, stdlib | ✅ есть | сквозная |
-| [[channels]] — каналы, `select`, buffered/unbuffered | 🔲 в плане | A0.6 |
-| [[context]] — `context.WithTimeout` и lifecycle | 🔲 в плане | A0.6 (вместе с каналами) |
+| [[channels]] — каналы, `select`, buffered/unbuffered | ✅ есть (новый формат) | task-07 |
+| [[context]] — `context.WithTimeout` и lifecycle | ✅ есть (новый формат) | task-07 |
+| [[go-tooling]] — команды go, ритуал перед коммитом | ✅ есть (новый формат) | task-07 |
 | [[interfaces]] — интерфейсы, неявная реализация | 🔲 в плане | A0.7 |
 | [[stdlib-cli]] — `os`, `bufio`, `flag` для CLI | 🔲 в плане | A0.8 |
 | [[net]] — `net.Dial`, `net.DialTimeout` | 🔲 в плане | A0.9 |
@@ -37,11 +38,15 @@
 
 ## Сети
 
-> Заполнится после A0. Сейчас: пусто.
+> Заполнится после A0 (фичи `dns`/`ports`/`http` в goscout) и из сетевых CTF-челленджей.
+> Сейчас: пусто.
 
 ## Безопасность
 
-> Заполнится после A0. Сейчас: пусто.
+> Питается из двух источников: фича `goscout http` (security headers, TLS) после A0
+> и **CTF-трек** (Web Exploitation — SQLi/XSS/SSRF/JWT). Каждый web-writeup привязан
+> к OWASP-категории; когда наберётся 5–6 — свести в `topics/security/owasp-top10.md`.
+> CTF-журнал и сессии — `knowledge-base/ctf/picoctf/`. Сейчас: пусто.
 
 ---
 
