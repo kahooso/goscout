@@ -1,34 +1,26 @@
-# Скомпилированные бинарники Go
-# go build кладёт .exe в директорию пакета — мусор, в репо не нужен
 *.exe
 *.exe~
 *.dll
 *.so
 *.dylib
 
-# Тестовые артефакты
 *.test
 *.out
 coverage.txt
 coverage.html
 
-# Зависимости — go.mod/go.sum в репо, vendor/ обычно нет
 vendor/
 
-# Обсидиан — личные настройки воркспейса, у каждого свои
 .obsidian/
 
-# IDE / редакторы
 .idea/
 .vscode/
 *.swp
 *.swo
 *~
 
-# Claude Code локальные настройки (личные, не для репо)
 .claude/settings.local.json
 .claude/settings.json
 
-# OS
 .DS_Store
 Thumbs.db
