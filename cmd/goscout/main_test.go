@@ -6,66 +6,82 @@ import (
 )
 
 const (
-	localhost = "localhost"
-	invalid   = "nonexistent.invalid"
+	localhost   = "localhost"
+	invalid     = "nonexistent.invalid"
+	placeholder = "127.0.0.1"
 )
 
-func TestResolveDomainTimeout(t *testing.T) {
+func TestProbeName(t *testing.T) {
 	tests := []struct {
-		name    string
-		domain  string
-		wantErr bool
+		probe Probe
+		want  string
 	}{
-		{
-			name:    "expired ctx",
-			domain:  localhost,
-			wantErr: true,
-		},
+		{probe: DNSProbe{}, want: "dns"},
+		{probe: PortProbe{}, want: "ports"},
 	}
 	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			ctx, cancel := context.WithTimeout(context.Background(), 0)
-			defer cancel()
-			ch := make(chan dnsResult, 1)
-			resolveDomain(ctx, tc.domain, ch)
-			res := <-ch
-			if (res.err != nil) != tc.wantErr {
-				t.Errorf("domain %q: err = %v, wantErr = %v", tc.domain, res.err, tc.wantErr)
-			}
-			if !tc.wantErr && len(res.addrs) == 0 {
-				t.Errorf("domain %q: expected addrs, got nil list", tc.domain)
+		t.Run(tc.want, func(t *testing.T) {
+			if got := tc.probe.Name(); got != tc.want {
+				t.Errorf("Name() = %q, want %q", got, tc.want)
 			}
 		})
 	}
 }
 
-func TestResolveDomain(t *testing.T) {
+func TestDNSProbeRun(t *testing.T) {
 	tests := []struct {
 		name    string
-		domain  string
+		target  string
 		wantErr bool
 	}{
 		{
 			name:    "happy localhost",
-			domain:  localhost,
+			target:  localhost,
 			wantErr: false,
 		},
 		{
 			name:    "invalid path",
-			domain:  invalid,
+			target:  invalid,
 			wantErr: true,
 		},
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			ch := make(chan dnsResult, 1)
-			resolveDomain(context.Background(), tc.domain, ch)
-			res := <-ch
-			if (res.err != nil) != tc.wantErr {
-				t.Errorf("domain %q: err = %v, wantErr = %v", tc.domain, res.err, tc.wantErr)
+			res := DNSProbe{}.Run(context.Background(), tc.target)
+			if (res.Error != nil) != tc.wantErr {
+				t.Errorf("domain %q: err = %v, wantErr = %v", tc.target, res.Error, tc.wantErr)
 			}
-			if !tc.wantErr && len(res.addrs) == 0 {
-				t.Errorf("domain %q: expected addrs, got nil list", tc.domain)
+			if !tc.wantErr && len(res.Output) == 0 {
+				t.Errorf("domain %q: expected addrs, got nil list", tc.target)
+			}
+		})
+	}
+}
+
+func TestDNSProbeRunTimeout(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), 0)
+	defer cancel()
+	res := DNSProbe{}.Run(ctx, localhost)
+	if res.Error == nil {
+		t.Errorf(" ctx timeout: expected error, got nil")
+	}
+}
+
+func TestPortProbeRun(t *testing.T) {
+	tests := []struct {
+		name    string
+		target  string
+		wantErr bool
+	}{
+		{
+			name: "not implemented",
+		},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			res := PortProbe{}.Run(context.Background(), placeholder)
+			if res.Error == nil {
+				t.Errorf("PortProbe.Run: expected error, got nil")
 			}
 		})
 	}
