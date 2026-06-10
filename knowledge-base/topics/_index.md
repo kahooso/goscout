@@ -18,7 +18,7 @@
 | [[channels]] — каналы, `select`, buffered/unbuffered | ✅ есть (новый формат) | task-07 |
 | [[context]] — `context.WithTimeout` и lifecycle | ✅ есть (новый формат) | task-07 |
 | [[go-tooling]] — команды go, ритуал перед коммитом | ✅ есть (новый формат) | task-07 |
-| [[interfaces]] — интерфейсы, неявная реализация | 🔲 в плане | A0.7 |
+| [[interfaces]] — интерфейсы, неявная реализация | ✅ есть (новый формат) | task-08 |
 | [[stdlib-cli]] — `os`, `bufio`, `flag` для CLI | 🔲 в плане | A0.8 |
 | [[net]] — `net.Dial`, `net.DialTimeout` | 🔲 в плане | A0.9 |
 
