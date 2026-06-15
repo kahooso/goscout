@@ -1,0 +1,6 @@
+google.com
+claude.ai
+vk.com
+telegram.org
+localhost
+github.com

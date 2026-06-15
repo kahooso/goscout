@@ -8,9 +8,12 @@
 package main
 
 import (
+	"bufio"
 	"context"
 	"errors"
+	"flag"
 	"fmt"
+	"io"
 	"net"
 	"os"
 	"time"
@@ -30,6 +33,10 @@ const (
 	`
 )
 
+/*
+
+ */
+
 type Result struct {
 	Probe  string
 	Target string
@@ -45,14 +52,14 @@ type Probe interface {
 type DNSProbe struct{}
 type PortProbe struct{}
 
-func runProbe(p Probe, targets []string) {
+func runProbe(p Probe, targets []string, timeout time.Duration) {
 	// A0.6 - параллельный resolve через горутины + каналы + context
 	if len(targets) == 0 {
 		fmt.Fprintf(os.Stderr, "%s: нужен минимум один домен\n", p.Name())
 		os.Exit(2)
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 
 	ch := make(chan Result, len(targets))
@@ -104,6 +111,22 @@ func runHTTP(args []string) {
 	fmt.Printf("url: %s\n", args[0])
 }
 
+func readTargets(r io.Reader) ([]string, error) {
+	var out []string
+	sc := bufio.NewScanner(r)
+	for sc.Scan() {
+		line := sc.Text() /* have no -> '\n', '\r' */
+		if line == "" {
+			continue
+		}
+		out = append(out, line)
+	}
+	if err := sc.Err(); err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func main() {
 	if len(os.Args) < 2 {
 		fmt.Fprint(os.Stderr, usage)
@@ -116,9 +139,41 @@ func main() {
 	case "--help", "-h":
 		fmt.Print(usage)
 	case "dns":
-		runProbe(DNSProbe{}, os.Args[2:])
+		// 3. Разобрать флаги этой команды → создаю FlagSet, регистрирую --timeout, --wordlist, Parse
+		// 4. Понять ОТКУДА брать домены:
+		//      - если задан --wordlist → открыть файл, прочитать через readTargets
+		//      - иначе                 → взять позиционные fs.Args()
+		// 5. Если доменов нет вообще     → ошибка "нужен домен или --wordlist"
+		fs := flag.NewFlagSet("dns", flag.ExitOnError)
+
+		timeout := fs.Duration("timeout", 5*time.Second, "resolve timeout")
+		wordlist := fs.String("wordlist", "", "wordlist")
+		fs.Parse(os.Args[2:]) // A: да — [0]=goscout, [1]=dns отрезаны, дальше флаги+позиционные
+
+		var targets []string
+		if *wordlist != "" {
+			f, err := os.Open(*wordlist)
+			if err != nil {
+				// A: да, ошибку проверяем всегда: файла нет/нет прав → f невалиден,
+				// читать нечего. Печатаем причину в stderr и выходим (runtime error → 1).
+				fmt.Fprintf(os.Stderr, "cannot open wordlist: %v\n", err)
+				os.Exit(1)
+			}
+			defer f.Close()
+
+			targets, err = readTargets(f)
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "cannot read targets: %v\n", err)
+				os.Exit(1)
+			}
+		} else {
+			targets = fs.Args()
+		}
+		// A: коды выхода — конвенция 0/1/2: 0 успех, 1 runtime (файл/сеть),
+		// 2 usage (кривой ввод). Подробно: topics/go/stdlib-cli.md
+		runProbe(DNSProbe{}, targets, *timeout)
 	case "ports":
-		runProbe(PortProbe{}, os.Args[2:])
+		runProbe(PortProbe{}, os.Args[2:], 5*time.Second)
 	case "http":
 		runHTTP(os.Args[2:])
 	default:

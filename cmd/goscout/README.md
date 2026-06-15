@@ -63,3 +63,5 @@ go test -race ./cmd/goscout
 ```
 
 Тестов пока нет — появятся вместе с реальной логикой в задаче A0.6.
+
+/* build ~ -> go build -o goscout.exe ./cmd/goscout/ */

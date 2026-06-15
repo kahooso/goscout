@@ -2,6 +2,8 @@ package main
 
 import (
 	"context"
+	"reflect"
+	"strings"
 	"testing"
 )
 
@@ -49,10 +51,10 @@ func TestDNSProbeRun(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			res := DNSProbe{}.Run(context.Background(), tc.target)
 			if (res.Error != nil) != tc.wantErr {
-				t.Errorf("domain %q: err = %v, wantErr = %v", tc.target, res.Error, tc.wantErr)
+				t.Errorf("Run(%q).Error = %v, wantErr %v", tc.target, res.Error, tc.wantErr)
 			}
 			if !tc.wantErr && len(res.Output) == 0 {
-				t.Errorf("domain %q: expected addrs, got nil list", tc.target)
+				t.Errorf("Run(%q).Output is empty, want non-empty", tc.target)
 			}
 		})
 	}
@@ -63,7 +65,7 @@ func TestDNSProbeRunTimeout(t *testing.T) {
 	defer cancel()
 	res := DNSProbe{}.Run(ctx, localhost)
 	if res.Error == nil {
-		t.Errorf(" ctx timeout: expected error, got nil")
+		t.Errorf("Run(%q) with expired ctx: Error = nil, want error", localhost)
 	}
 }
 
@@ -81,8 +83,60 @@ func TestPortProbeRun(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			res := PortProbe{}.Run(context.Background(), placeholder)
 			if res.Error == nil {
-				t.Errorf("PortProbe.Run: expected error, got nil")
+				t.Errorf("Run(%q).Error = nil, want error", placeholder)
 			}
+		})
+	}
+}
+
+func TestReadTargets(t *testing.T) {
+	tests := []struct {
+		name  string
+		input string
+		want  []string
+	}{
+		{
+			"happy",
+			"a.com\nb.com\n",
+			[]string{"a.com", "b.com"},
+		},
+		{
+			"50/50",
+			"a.com\n\n\nb.com\n",
+			[]string{"a.com", "b.com"},
+		},
+		{
+			"empty",
+			"",
+			nil,
+		},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			targets, err := readTargets(strings.NewReader(tc.input))
+			if err != nil {
+				t.Errorf("readTargets(%q): unexpected error %v", tc.input, err)
+				return
+			}
+			if !reflect.DeepEqual(targets, tc.want) {
+				t.Errorf("readTargets(%q) = %v, want %v", tc.input, targets, tc.want)
+			}
+			/*
+				f := func(x, y []string) bool {
+					if len(x) != len(y) {
+						return false
+					}
+					for i := range x {
+						if x[i] != y[i] {
+							return false
+						}
+					}
+					return true
+				}
+				if !reflect.DeepEqual(tc.want, targets) {
+					t.Errorf("ReadTargets: want %v, got %v", tc.want, targets)
+				}
+			*/
 		})
 	}
 }
