@@ -37,7 +37,7 @@ func readTargets(r io.Reader) ([]string, error) {
     var out []string
     sc := bufio.NewScanner(r)
     for sc.Scan() {                                   // true пока есть строки
-        line := sc.Text()                            // строка без \n
+        line := sc.Text()                            // строка без \n (и без \r на Windows-\r\n)
         if line == "" { continue }                   // пропуск пустых
         out = append(out, line)
     }
@@ -48,6 +48,11 @@ func readTargets(r io.Reader) ([]string, error) {
 ## Личный опыт
 
 ### Что я понял не сразу
+- **`bufio.Scanner` сам режет окончания строк, ОБА варианта.** Сплиттер по умолчанию
+  `bufio.ScanLines` снимает и `\n` (Unix), и `\r\n` (Windows) — `Text()` всегда отдаёт
+  «чистую» строку. Не надо вручную `strings.TrimRight(s, "\r\n")` после `Text()` — это
+  лишнее. (Иначе при чтении wordlist, созданного в Блокноте, домен `example.com\r`
+  не нашёлся бы в DNS — резолвер бы ругался на невалидное имя.)
 - **Зачем `flag.X` возвращает указатель (`*int`, `*time.Duration`).** Регистрация флага и
   его парсинг — два РАЗНЫХ момента. При регистрации `fs.Duration(...)` создаёт ячейку,
   кладёт дефолт, возвращает её **адрес**. При `fs.Parse(args)` записывает распарсенное
