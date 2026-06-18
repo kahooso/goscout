@@ -70,22 +70,9 @@ func TestDNSProbeRunTimeout(t *testing.T) {
 }
 
 func TestPortProbeRun(t *testing.T) {
-	tests := []struct {
-		name    string
-		target  string
-		wantErr bool
-	}{
-		{
-			name: "not implemented",
-		},
-	}
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			res := PortProbe{}.Run(context.Background(), placeholder)
-			if res.Error == nil {
-				t.Errorf("Run(%q).Error = nil, want error", placeholder)
-			}
-		})
+	res := PortProbe{}.Run(context.Background(), placeholder)
+	if res.Error == nil {
+		t.Errorf("Run(%q).Error = nil, want error", placeholder)
 	}
 }
 
@@ -121,22 +108,6 @@ func TestReadTargets(t *testing.T) {
 			if !reflect.DeepEqual(targets, tc.want) {
 				t.Errorf("readTargets(%q) = %v, want %v", tc.input, targets, tc.want)
 			}
-			/*
-				f := func(x, y []string) bool {
-					if len(x) != len(y) {
-						return false
-					}
-					for i := range x {
-						if x[i] != y[i] {
-							return false
-						}
-					}
-					return true
-				}
-				if !reflect.DeepEqual(tc.want, targets) {
-					t.Errorf("ReadTargets: want %v, got %v", tc.want, targets)
-				}
-			*/
 		})
 	}
 }

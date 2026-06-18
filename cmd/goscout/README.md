@@ -14,39 +14,19 @@
 
 | Команда | Тема | Статус |
 |---------|------|--------|
-| `goscout dns <domain>...` | A0.6 каналы + context | каркас, TODO |
-| `goscout ports <host>` | A0.7 интерфейсы + A0.9 net | каркас, TODO |
-| `goscout http <url>` | пост-A0: net/http, TLS | каркас, TODO |
-| `goscout --version` | — | работает |
-| `goscout --help` | — | работает |
+| `goscout dns <domain>...` | A0.6 каналы + context, A0.8 CLI | ✅ работает (горутины + context, флаги `--timeout`/`--wordlist`) |
+| `goscout ports <host>` | A0.7 интерфейсы + A0.9 net | каркас (`PortProbe` пустая, заглушка `not implemented yet`) |
+| `goscout http <url>` | пост-A0: net/http, TLS | заглушка |
+| `goscout --version` / `-v` | — | работает |
+| `goscout --help` / `-h` | — | работает |
 
-## Что появится в каждой задаче
+## Что осталось до v0.1
 
-### A0.6 — `dns`
-Параллельный resolve N доменов с таймаутом.
-- N горутин-резолверов, по одной на домен
-- Канал результатов `chan dnsResult`
-- `context.WithTimeout` для остановки зависших lookups
-- `select { case r := <-results: ... case <-ctx.Done(): ... }`
-
-### A0.7 — `Probe` интерфейс
-Общий тип для всех проверок:
-```go
-type Probe interface {
-    Run(ctx context.Context, target string) (Result, error)
-    Name() string
-}
-```
-`DNSProbe` уже есть; `PortProbe`, `HTTPProbe` идут позже.
-
-### A0.8 — флаги и wordlist
-`--timeout`, `--wordlist` для DNS перебора (subdomain enum).
-`bufio.Scanner` для чтения wordlist построчно.
-
-### A0.9 — `ports`
+### A0.9 — `ports` (в работе)
 TCP port scan через `net.DialTimeout`.
 - Worker pool: буферизованный канал заданий, N воркеров
 - Параллельность ограничена `--workers` флагом
+- Три исхода: OPEN (SYN-ACK) / CLOSED (RST) / FILTERED (timeout) — см. `topics/networks/tcp-ip.md`
 
 ## Запуск
 
@@ -62,6 +42,13 @@ go run ./cmd/goscout ports example.com
 go test -race ./cmd/goscout
 ```
 
-Тестов пока нет — появятся вместе с реальной логикой в задаче A0.6.
+Покрытие на текущий момент: `Probe.Name()`, `DNSProbe.Run` (happy + invalid + истёкший
+context), `PortProbe.Run` (заглушка возвращает ошибку), `readTargets` (happy / пустые
+строки / пустой ввод через `strings.NewReader`).
 
-/* build ~ -> go build -o goscout.exe ./cmd/goscout/ */
+## Сборка
+
+```bash
+go build -o goscout ./cmd/goscout      # Linux/macOS
+go build -o goscout.exe ./cmd/goscout  # Windows
+```

@@ -16,6 +16,7 @@ import (
 	"io"
 	"net"
 	"os"
+	"strings"
 	"time"
 )
 
@@ -33,10 +34,6 @@ const (
 	`
 )
 
-/*
-
- */
-
 type Result struct {
 	Probe  string
 	Target string
@@ -53,7 +50,6 @@ type DNSProbe struct{}
 type PortProbe struct{}
 
 func runProbe(p Probe, targets []string, timeout time.Duration) {
-	// A0.6 - параллельный resolve через горутины + каналы + context
 	if len(targets) == 0 {
 		fmt.Fprintf(os.Stderr, "%s: нужен минимум один домен\n", p.Name())
 		os.Exit(2)
@@ -77,7 +73,7 @@ func runProbe(p Probe, targets []string, timeout time.Duration) {
 				fmt.Printf("%v\n", res.Error)
 				continue
 			}
-			fmt.Printf("%s -> %s\n", res.Target, res.Output)
+			fmt.Printf("%s -> %s\n", res.Target, strings.Join(res.Output, ", "))
 		case <-ctx.Done():
 			return
 		}
@@ -115,7 +111,7 @@ func readTargets(r io.Reader) ([]string, error) {
 	var out []string
 	sc := bufio.NewScanner(r)
 	for sc.Scan() {
-		line := sc.Text() /* have no -> '\n', '\r' */
+		line := sc.Text()
 		if line == "" {
 			continue
 		}
@@ -139,23 +135,15 @@ func main() {
 	case "--help", "-h":
 		fmt.Print(usage)
 	case "dns":
-		// 3. Разобрать флаги этой команды → создаю FlagSet, регистрирую --timeout, --wordlist, Parse
-		// 4. Понять ОТКУДА брать домены:
-		//      - если задан --wordlist → открыть файл, прочитать через readTargets
-		//      - иначе                 → взять позиционные fs.Args()
-		// 5. Если доменов нет вообще     → ошибка "нужен домен или --wordlist"
 		fs := flag.NewFlagSet("dns", flag.ExitOnError)
-
 		timeout := fs.Duration("timeout", 5*time.Second, "resolve timeout")
 		wordlist := fs.String("wordlist", "", "wordlist")
-		fs.Parse(os.Args[2:]) // A: да — [0]=goscout, [1]=dns отрезаны, дальше флаги+позиционные
+		fs.Parse(os.Args[2:])
 
 		var targets []string
 		if *wordlist != "" {
 			f, err := os.Open(*wordlist)
 			if err != nil {
-				// A: да, ошибку проверяем всегда: файла нет/нет прав → f невалиден,
-				// читать нечего. Печатаем причину в stderr и выходим (runtime error → 1).
 				fmt.Fprintf(os.Stderr, "cannot open wordlist: %v\n", err)
 				os.Exit(1)
 			}
@@ -169,8 +157,6 @@ func main() {
 		} else {
 			targets = fs.Args()
 		}
-		// A: коды выхода — конвенция 0/1/2: 0 успех, 1 runtime (файл/сеть),
-		// 2 usage (кривой ввод). Подробно: topics/go/stdlib-cli.md
 		runProbe(DNSProbe{}, targets, *timeout)
 	case "ports":
 		runProbe(PortProbe{}, os.Args[2:], 5*time.Second)
