@@ -44,9 +44,9 @@
 **Если ответил не в формате** — это признак что Claude схалтурил.
 Скажи: «Ответь СТРОГО в формате выше».
 
-**Если в строке "проверил memory" не упомянуты как минимум `project_vector_ai_security.md`,
+**Если в строке "проверил memory" не упомянуты как минимум `project_vector_backend_go.md`,
 `user_go_level.md`, `feedback_think_independently.md`** — память не подгружена.
-Скажи: «Перечитай memory полностью, особенно `project_vector_ai_security.md`».
+Скажи: «Перечитай memory полностью, особенно `project_vector_backend_go.md`».
 
 ---
 
