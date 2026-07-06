@@ -33,7 +33,7 @@ Claude ведёт по плану (синхронно с университет�
 
 ```bash
 go run ./cmd/goscout dns example.com google.com   # параллельный DNS (A0.6)
-go run ./cmd/goscout ports example.com            # TCP scan (A0.9)
+go run ./cmd/goscout ports example.com            # TCP scan — заглушка (A0.9 в работе)
 go run ./cmd/goscout http example.com             # HTTP probe (v1)
 go run ./cmd/goscout --version
 ```

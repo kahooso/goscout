@@ -20,7 +20,7 @@
 | [[go-tooling]] — команды go, ритуал перед коммитом | ✅ есть (новый формат) | task-07 |
 | [[interfaces]] — интерфейсы, неявная реализация | ✅ есть (новый формат) | task-08 |
 | [[stdlib-cli]] — `os`, `bufio`, `flag`, `io.Reader` для CLI | ✅ есть (новый формат) | task-09 |
-| [[net]] — `net.Dial`, `net.DialTimeout` | 🔲 в плане | A0.9 |
+| [[net]] — `DialTimeout`, `JoinHostPort`, `Listen`, скан портов | ✅ есть (новый формат) | task-10 (worker pool ⬜) |
 
 ## Алгоритмы
 
