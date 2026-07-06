@@ -16,6 +16,7 @@ import (
 	"io"
 	"net"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -47,7 +48,15 @@ type Probe interface {
 }
 
 type DNSProbe struct{}
-type PortProbe struct{}
+type PortProbe struct {
+	Ports   []uint16
+	Timeout time.Duration
+}
+
+type portResult struct {
+	Port uint16
+	Open bool
+}
 
 func runProbe(p Probe, targets []string, timeout time.Duration) {
 	if len(targets) == 0 {
@@ -94,7 +103,42 @@ func (p PortProbe) Name() string {
 }
 
 func (p PortProbe) Run(ctx context.Context, target string) Result {
-	return Result{Probe: "ports", Target: target, Error: errors.New("ports: not implemented yet")}
+	if len(p.Ports) == 0 {
+		return Result{Probe: "ports", Target: target, Error: fmt.Errorf("%s: %w", p.Name(), errors.New("list is empty"))}
+	}
+
+	const workers = 100
+	jobs := make(chan uint16, len(p.Ports))
+	results := make(chan portResult, len(p.Ports))
+
+	for _, port := range p.Ports {
+		jobs <- port
+	}
+	close(jobs)
+
+	var open []string
+	for range workers {
+		go func() {
+			for port := range jobs {
+				addr := net.JoinHostPort(target, strconv.Itoa(int(port)))
+				conn, err := net.DialTimeout("tcp", addr, p.Timeout)
+				isOpen := err == nil
+				if isOpen {
+					conn.Close()
+				}
+				results <- portResult{Port: port, Open: isOpen}
+			}
+		}()
+	}
+
+	for i := 0; i < len(p.Ports); i++ {
+		r := <-results
+		if r.Open {
+			open = append(open, strconv.Itoa(int(r.Port)))
+		}
+	}
+
+	return Result{Probe: "ports", Target: target, Output: open, Error: nil}
 }
 
 func runHTTP(args []string) {

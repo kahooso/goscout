@@ -2,9 +2,12 @@ package main
 
 import (
 	"context"
+	"net"
 	"reflect"
+	"strconv"
 	"strings"
 	"testing"
+	"time"
 )
 
 const (
@@ -109,5 +112,46 @@ func TestReadTargets(t *testing.T) {
 				t.Errorf("readTargets(%q) = %v, want %v", tc.input, targets, tc.want)
 			}
 		})
+	}
+}
+
+func TestPortProbeRunOpen(t *testing.T) {
+	ln, err := net.Listen("tcp", "127.0.0.1:0")
+	if err != nil {
+		t.Fatalf("listener cannot be created: %v", err)
+	}
+	defer ln.Close()
+
+	port := uint16(ln.Addr().(*net.TCPAddr).Port)
+
+	p := PortProbe{Ports: []uint16{port}, Timeout: time.Second}
+	res := p.Run(context.Background(), placeholder)
+
+	if res.Error != nil {
+		t.Fatalf("PortProbe.Run(): %v", res.Error)
+	}
+
+	want := strconv.Itoa(int(port))
+	if len(res.Output) != 1 || res.Output[0] != want {
+		t.Errorf("Output = %v, want [%s]", res.Output, want)
+	}
+}
+
+func TestPortProbeRunClosed(t *testing.T) {
+	ln, err := net.Listen("tcp", "127.0.0.1:0")
+	if err != nil {
+		t.Fatalf("listener cannot be created: %v", err)
+	}
+	port := uint16(ln.Addr().(*net.TCPAddr).Port)
+	ln.Close()
+
+	p := PortProbe{Ports: []uint16{port}, Timeout: time.Second}
+	res := p.Run(context.Background(), placeholder)
+
+	if res.Error != nil {
+		t.Fatalf("closed port: Error = %v, want nil", res.Error)
+	}
+	if len(res.Output) != 0 {
+		t.Errorf("closed port: Output = %v, want empty", res.Output)
 	}
 }
