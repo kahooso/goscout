@@ -12,6 +12,7 @@ coverage.html
 vendor/
 
 .obsidian/
+temp.md
 
 .idea/
 .vscode/

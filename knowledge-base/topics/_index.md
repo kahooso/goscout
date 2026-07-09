@@ -8,7 +8,7 @@
 |------|--------|----------------|
 | [[structs]] — структуры и методы | ✅ есть | task-01 |
 | [[slices-maps]] — слайсы и мэпы | ✅ есть | task-02 |
-| [[strings-sort]] — пакеты strings и sort | ✅ есть | task-02 |
+| [[strings-sort]] — strings, sort, `slices.Sort` vs `sort.Slice`, лексикографика | ✅ есть | task-02, task-10 |
 | [[hash-table]] — хеш-таблица vs дерево | ✅ есть | task-02 (бонус) |
 | [[pointers]] — указатели, value vs pointer receiver | ✅ есть | task-04 |
 | [[errors]] — `errors`, `fmt.Errorf`, `errors.Is/As` | ✅ есть | task-05 |
@@ -20,7 +20,7 @@
 | [[go-tooling]] — команды go, ритуал перед коммитом | ✅ есть (новый формат) | task-07 |
 | [[interfaces]] — интерфейсы, неявная реализация | ✅ есть (новый формат) | task-08 |
 | [[stdlib-cli]] — `os`, `bufio`, `flag`, `io.Reader` для CLI | ✅ есть (новый формат) | task-09 |
-| [[net]] — `DialTimeout`, `JoinHostPort`, `Listen`, скан портов | ✅ есть (новый формат) | task-10 (worker pool ⬜) |
+| [[net]] — `DialTimeout`, `JoinHostPort`, `Listen`, worker pool, скан портов | ✅ есть (новый формат) | task-10 ✅ |
 
 ## Алгоритмы
 

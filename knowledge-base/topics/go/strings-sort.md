@@ -52,6 +52,57 @@ sort.Slice(keys, func(i, j int) bool {
 
 Если `a == b` и `less` использует `>=`, то `less(i,j)` и `less(j,i)` оба `true` — противоречие, алгоритм ломается.
 
+---
+
+## slices.Sort vs sort.Slice vs slices.SortFunc (Go 1.21+)
+
+Три инструмента, разница — нужен ли предикат:
+
+```go
+slices.Sort(s)                       // упорядоченные типы (int, string, uint16...) — БЕЗ предиката
+sort.Slice(s, func(i, j int) bool)   // любой тип — предикат less(i,j) по ИНДЕКСАМ
+slices.SortFunc(s, func(a, b T) int) // любой тип — компаратор по ЗНАЧЕНИЯМ, cmp.Compare-стиль (-1/0/+1)
+```
+
+- `slices.Sort` — самый короткий, когда тип сам знает `<` (числа, строки). Для `[]uint16` —
+  ровно он.
+- `sort.Slice` — когда сортируешь по вычисляемому ключу (частота, поле структуры). Предикат
+  берёт **индексы** `i, j`, а не значения.
+- `slices.SortFunc` — как `sort.Slice`, но компаратор берёт **значения** и возвращает `int`
+  (`-1/0/+1`), удобно через `cmp.Compare(a, b)`.
+- **DESC:** либо `slices.Sort` + `slices.Reverse(s)`, либо `slices.SortFunc(s, func(a,b T) int { return cmp.Compare(b, a) })` (аргументы наоборот).
+
+### Лексикографическая сортировка строк — подводный камень
+
+Строки сравниваются **посимвольно слева направо** по коду символа, НЕ по длине и НЕ по сумме байт:
+
+```go
+"443" < "80"   // true! '4'(52) < '8'(56) на первом символе — длина не смотрится
+```
+
+Поэтому числа, лежащие как строки, сортируются «неправильно» для человека (`"100" < "22" < "80"`).
+Правило: **сортируй пока значения числовые** (`slices.Sort([]uint16)`), конвертируй в строку
+в самом конце. Длина строки участвует только если одна — префикс другой (`"8" < "80"`).
+
+## Личный опыт
+
+### Что я понял не сразу (task-10)
+- **Думал, строки сортируются по сумме/количеству байт.** На деле — лексикографика, посимвольно.
+  `"443" < "80"`, потому что `'4' < '8'` на первой позиции; сколько всего символов — неважно.
+- **Путал `slices.Sort` и `sort.Slice`.** `slices.Sort` — без предиката (для упорядоченных типов),
+  `sort.Slice` — с предикатом `less(i,j) bool`. Раньше думал, что и `slices.Sort` берёт функцию.
+- **Зачем вообще сортировать вывод сканера.** Для человека порядок портов неважен, НО worker pool
+  отдаёт результаты недетерминированно → без сортировки тест на `reflect.DeepEqual(Output, ...)`
+  моргал бы. Сортировка = детерминизм ради тестируемости. См. [[net]] (worker pool).
+
+## Ключевые термины (English)
+- `slices.Sort` — sort a slice of ordered types in place, no comparator
+- `sort.Slice` — sort with a `less(i, j int) bool` predicate (by index)
+- `slices.SortFunc` — sort with a `cmp(a, b T) int` comparator (by value)
+- `slices.Reverse` — reverse a slice in place (ASC → DESC after Sort)
+- `cmp.Compare` — returns -1/0/+1; standard comparator helper (Go 1.21+)
+- `lexicographic order` — char-by-char comparison; `"443" < "80"`, length is secondary
+
 ## Связанные темы
 
-[[slices-maps]] [[stdlib]]
+[[slices-maps]] [[stdlib]] [[net]]

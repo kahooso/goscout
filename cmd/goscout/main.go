@@ -16,6 +16,7 @@ import (
 	"io"
 	"net"
 	"os"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -23,16 +24,23 @@ import (
 
 const (
 	version = "0.0.1"
-	usage   = `goscout — сетевой scout.
+	usage   = `goscout — a network scout.
 
-	Использование:
-	goscout dns <domain> [<domain>...]   параллельный DNS reconnaissance
-	goscout ports <host>                 TCP port scanner (заглушка)
-	goscout http <url>                   HTTP probe (заглушка)
-	goscout --version                    вывести версию
+Usage:
+  goscout dns [--wordlist <file>] <domain> [<domain>...]   parallel DNS reconnaissance
+  goscout ports --ports <list> <host>                      TCP port scanner
+  goscout http <url>                                       HTTP probe (not implemented)
+  goscout --version                                        print version
 
-	Подкоманды реализуются по мере прохождения тем — см. cmd/goscout/README.md.
-	`
+Flags must come before the host/domain arguments.
+See cmd/goscout/README.md for details.
+`
+)
+
+const (
+	Workers = 100
+	MinPort = 1
+	MaxPort = 65535
 )
 
 type Result struct {
@@ -60,7 +68,7 @@ type portResult struct {
 
 func runProbe(p Probe, targets []string, timeout time.Duration) {
 	if len(targets) == 0 {
-		fmt.Fprintf(os.Stderr, "%s: нужен минимум один домен\n", p.Name())
+		fmt.Fprintf(os.Stderr, "%s: no targets provided\n", p.Name())
 		os.Exit(2)
 	}
 
@@ -79,7 +87,7 @@ func runProbe(p Probe, targets []string, timeout time.Duration) {
 		select {
 		case res := <-ch:
 			if res.Error != nil {
-				fmt.Printf("%v\n", res.Error)
+				fmt.Fprintf(os.Stderr, "%s: %v\n", res.Probe, res.Error)
 				continue
 			}
 			fmt.Printf("%s -> %s\n", res.Target, strings.Join(res.Output, ", "))
@@ -104,10 +112,9 @@ func (p PortProbe) Name() string {
 
 func (p PortProbe) Run(ctx context.Context, target string) Result {
 	if len(p.Ports) == 0 {
-		return Result{Probe: "ports", Target: target, Error: fmt.Errorf("%s: %w", p.Name(), errors.New("list is empty"))}
+		return Result{Probe: "ports", Target: target, Error: errors.New("no ports to scan")}
 	}
 
-	const workers = 100
 	jobs := make(chan uint16, len(p.Ports))
 	results := make(chan portResult, len(p.Ports))
 
@@ -116,8 +123,8 @@ func (p PortProbe) Run(ctx context.Context, target string) Result {
 	}
 	close(jobs)
 
-	var open []string
-	for range workers {
+	var open []uint16
+	for range Workers {
 		go func() {
 			for port := range jobs {
 				addr := net.JoinHostPort(target, strconv.Itoa(int(port)))
@@ -134,20 +141,26 @@ func (p PortProbe) Run(ctx context.Context, target string) Result {
 	for i := 0; i < len(p.Ports); i++ {
 		r := <-results
 		if r.Open {
-			open = append(open, strconv.Itoa(int(r.Port)))
+			open = append(open, r.Port)
 		}
 	}
+	slices.Sort(open)
 
-	return Result{Probe: "ports", Target: target, Output: open, Error: nil}
+	var output []string
+	for _, v := range open {
+		output = append(output, strconv.Itoa(int(v)))
+	}
+
+	return Result{Probe: "ports", Target: target, Output: output, Error: nil}
 }
 
 func runHTTP(args []string) {
 	if len(args) == 0 {
-		fmt.Fprintln(os.Stderr, "http: нужен URL")
+		fmt.Fprintln(os.Stderr, "http: no url provided")
 		os.Exit(2)
 	}
 	// TODO(post-A0): net/http клиент с таймаутом, разбор security headers, TLS info
-	fmt.Println("http: not implemented yet (ждёт post-A0)")
+	fmt.Println("http: not implemented yet")
 	fmt.Printf("url: %s\n", args[0])
 }
 
@@ -167,6 +180,24 @@ func readTargets(r io.Reader) ([]string, error) {
 	return out, nil
 }
 
+func parsePorts(s string) ([]uint16, error) {
+	ports := strings.Split(s, ",")
+
+	var out []uint16
+	for _, port := range ports {
+		conv, err := strconv.Atoi(strings.TrimSpace(port))
+		if err != nil {
+			return nil, fmt.Errorf("invalid port %q: %w", port, err)
+		}
+		if conv >= MinPort && conv <= MaxPort {
+			out = append(out, uint16(conv))
+		} else {
+			return nil, fmt.Errorf("port %d out of range (%d-%d)", conv, MinPort, MaxPort)
+		}
+	}
+	return out, nil
+}
+
 func main() {
 	if len(os.Args) < 2 {
 		fmt.Fprint(os.Stderr, usage)
@@ -179,7 +210,7 @@ func main() {
 	case "--help", "-h":
 		fmt.Print(usage)
 	case "dns":
-		fs := flag.NewFlagSet("dns", flag.ExitOnError)
+		fs := flag.NewFlagSet(DNSProbe{}.Name(), flag.ExitOnError)
 		timeout := fs.Duration("timeout", 5*time.Second, "resolve timeout")
 		wordlist := fs.String("wordlist", "", "wordlist")
 		fs.Parse(os.Args[2:])
@@ -188,14 +219,14 @@ func main() {
 		if *wordlist != "" {
 			f, err := os.Open(*wordlist)
 			if err != nil {
-				fmt.Fprintf(os.Stderr, "cannot open wordlist: %v\n", err)
+				fmt.Fprintf(os.Stderr, "dns: cannot open wordlist: %v\n", err)
 				os.Exit(1)
 			}
 			defer f.Close()
 
 			targets, err = readTargets(f)
 			if err != nil {
-				fmt.Fprintf(os.Stderr, "cannot read targets: %v\n", err)
+				fmt.Fprintf(os.Stderr, "dns: cannot read targets: %v\n", err)
 				os.Exit(1)
 			}
 		} else {
@@ -203,11 +234,23 @@ func main() {
 		}
 		runProbe(DNSProbe{}, targets, *timeout)
 	case "ports":
-		runProbe(PortProbe{}, os.Args[2:], 5*time.Second)
+		fs := flag.NewFlagSet(PortProbe{}.Name(), flag.ExitOnError)
+		timeout := fs.Duration("timeout", 5*time.Second, "resolve timeout")
+		portsRaw := fs.String("ports", "", "comma-separated ports, e.g. 80,443,22")
+		fs.Parse(os.Args[2:])
+
+		ports, err := parsePorts(*portsRaw)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "ports: %v\n", err)
+			os.Exit(2)
+		}
+		targets := fs.Args()
+
+		runProbe(PortProbe{Ports: ports, Timeout: *timeout}, targets, *timeout)
 	case "http":
 		runHTTP(os.Args[2:])
 	default:
-		fmt.Fprintf(os.Stderr, "unknown subcomm: %q\n\n%s", os.Args[1], usage)
+		fmt.Fprintf(os.Stderr, "unknown subcommand: %q\n\n%s", os.Args[1], usage)
 		os.Exit(2)
 	}
 }

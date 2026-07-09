@@ -14,7 +14,7 @@
 // последовательный скан списка портов на одном хосте
 func (p PortProbe) Run(ctx context.Context, target string) Result {
     if len(p.Ports) == 0 {
-        return Result{Probe: "ports", Target: target, Error: errors.New("ports: список пуст")}
+        return Result{Probe: "ports", Target: target, Error: errors.New("no ports to scan")}
     }
     var open []string
     for _, port := range p.Ports {
@@ -84,6 +84,23 @@ for i := 0; i < len(p.Ports); i++ {             // collector: ровно N ре�
 - **`close(jobs)` не стирает буфер** — воркеры дочерпывают остаток и только потом `range` выходит.
 - **`close(results)` не нужен**, т.к. читаем счётным циклом ровно `len(p.Ports)`, не через `range`.
 - **Гонки нет:** `append` в `open` только в collector (одна горутина); воркеры пишут лишь в канал.
+
+### Сортировка результатов (стадия 2b, task-10)
+Worker pool отдаёт открытые порты в **непредсказуемом порядке** (кто первый прислал в `results`).
+Собираю их в `open []uint16` (числами!), сортирую `slices.Sort(open)` **до** конвертации в строки:
+```go
+var open []uint16
+for range p.Ports {                       // ровно len(p.Ports) результатов
+    if r := <-results; r.Open { open = append(open, r.Port) }
+}
+slices.Sort(open)                          // ЧИСЛЕННО: 80 < 443 (строки дали бы "443" < "80")
+var output []string
+for _, v := range open { output = append(output, strconv.Itoa(int(v))) }
+```
+- **Зачем:** без сортировки тест на `reflect.DeepEqual(Output, ...)` моргал бы — порядок из пула
+  недетерминирован. Сортировка = детерминизм ради тестируемости.
+- **Численно, не строкой:** сортируй пока `[]uint16`, конвертируй в строку в конце. Лексикографика
+  строк дала бы `"443" < "80"`. Разбор — [[strings-sort]].
 
 ### На чём попадался
 - `task-10`: `conn.Close()` вне `if` (дважды при правках); `target` = `host:port` вместо host.

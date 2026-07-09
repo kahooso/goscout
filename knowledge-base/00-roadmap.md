@@ -21,6 +21,7 @@
 | 07 | A0.6 | Каналы + select + context — параллельный DNS resolve (`goscout dns`) | ✅ выполнено | 2026-06-06 |
 | 08 | A0.7 | Интерфейсы — `Probe` контракт, полиморфный раннер (dns + ports-заглушка) | ✅ выполнено | 2026-06-10 |
 | 09 | A0.8 | stdlib CLI — флаги `--timeout`/`--wordlist`, чтение wordlist (`os`/`bufio`/`io.Reader`) | ✅ выполнено | 2026-06-15 |
+| 10 | A0.9 | net + worker pool — `goscout ports` (TCP-скан, `parsePorts`, числовая сортировка, унификация вывода) | ✅ выполнено | 2026-07-10 |
 
 ## Algo-практика
 
