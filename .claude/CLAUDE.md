@@ -93,6 +93,7 @@ goscout/
 │   ├── goscout/          — ЯКОРНЫЙ ПРОДУКТ: сетевой recon CLI с security-уклоном (растёт по мере тем)
 │   ├── tasks/<имя>/      — algo-практика (мини-задачи, package = имя, не main;
 │   │                       запускаются через `go test`, не `go run`)
+│   ├── retest-a06/       — артефакт blank-slate ретеста A0.6 (гейт закрытия блока A0)
 │   └── <учебные>/        — артефакты задач A0.1–A0.5 (structs/, collections/,
 │                           logparse/, pointers/, errors-demo/, goroutines/)
 │
