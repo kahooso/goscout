@@ -242,6 +242,17 @@ if len(got) != 0 { t.Errorf(...) }
 - `testing.B` — бенчмарки: `BenchmarkXxx(b *testing.B)`, запуск `go test -bench=.`
 - `testing.F` — fuzzing: автоматическая генерация входных данных для поиска паник
 
+## Ключевые термины (English)
+
+- `tautological assertion` — проверка, истинная при любом коде; ложное покрытие
+- `mutation testing` — намеренно ломаем код и смотрим, покраснеет ли тест
+- `flaky test` — то зелёный, то красный без изменений кода (частая причина — время)
+- `wall clock` — настенные часы, реальное время; противопоставляется монотонному
+- `property-based testing` — проверяем свойства результата, а не точное значение
+- `table-driven test` — таблица кейсов + `t.Run` на каждый
+- `code coverage` — доля исполненных строк; не равна доле проверенного поведения
+- `assertion` — утверждение о результате; в Go пишется руками через `if` + `t.Errorf`
+
 ## Связанные темы
 
-[[slices-maps]] [[errors]] [[goroutines]]
+[[slices-maps]] [[errors]] [[goroutines]] [[context]]

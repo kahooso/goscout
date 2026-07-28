@@ -142,6 +142,16 @@ sort.Slice(keys, func(i, j int) bool {
 - `sort.Slice` требует строгое упорядочение: `>=` и `<=` в `less` сломают сортировку
 - `make(map[string]int, 0)` — лишний `0`, то же что `make(map[string]int)`
 
+## Ключевые термины (English)
+
+- `slice header` — тройка `{ptr, len, cap}`, то, что реально лежит в переменной
+- `nil slice` vs `empty slice` — `ptr == nil` против указателя на `zerobase`
+- `capacity` — сколько влезет без новой аллокации; `cap()`
+- `pre-allocate` — `make([]T, 0, n)`, когда размер известен заранее
+- `type conversion` — `T(v)`, например `[]string(nil)`; не приведение, а преобразование
+- `untyped nil` — `nil` без типа; `x := nil` не компилируется
+- `hash table` — то, чем является `map` под капотом
+
 ## Связанные темы
 
-[[strings]] [[sort]] [[pointers]] [[structs]]
+[[strings]] [[sort]] [[pointers]] [[structs]] [[testing]]
