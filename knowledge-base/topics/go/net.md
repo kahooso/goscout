@@ -52,6 +52,38 @@ func (p PortProbe) Run(ctx context.Context, target string) Result {
 - **`uint16` как тип порта.** Порт 0–65535 влезает ровно в 16 бит. `[]uint16` вместо `[]int` —
   самодокументируется; расплата — `strconv.Itoa(int(port))` (Itoa хочет `int`).
 
+### `DialTimeout` vs `DialContext` (task-12)
+
+`net.DialTimeout` **не умеет отмену** — он подставляет контекст, который не отменяется никогда.
+Исходник `net/dial.go`:
+
+```go
+func DialTimeout(network, address string, timeout time.Duration) (Conn, error) {
+    d := Dialer{Timeout: timeout}
+    return d.Dial(network, address)
+}
+func (d *Dialer) Dial(network, address string) (Conn, error) {
+    return d.DialContext(context.Background(), network, address)   // <- вот здесь
+}
+```
+
+Поэтому как только у функции в сигнатуре появился `ctx`, dial обязан идти через
+`(&net.Dialer{Timeout: ...}).DialContext(ctx, ...)`, иначе отмена обрывается на этом месте.
+
+- **Два независимых бюджета времени.** `Dialer.Timeout` — потолок на ОДИН dial, отсчёт с нуля
+  на каждом. `ctx` — дедлайн на весь запуск. Побеждает **более ранний** срок, `dial.go:250-258`
+  берёт `minNonzeroTime(now+Timeout, ctx.Deadline(), d.Deadline)`. Волна воркеров, стартующая
+  на исходе общего бюджета, получит не полный `Timeout`, а остаток.
+- Правило: per-dial маленький, общий дедлайн большой. Если они равны, первая же волна воркеров
+  съедает весь бюджет, и остальные порты не проверяются (в `outpost` это пока один флаг
+  `--timeout` на оба — записано в `BACKLOG.md`).
+- **Мёртвый ctx не тормозит dial**: замер на заведомо открытом порту — 0 с / 552 мкс вместо
+  `Timeout: 5s`. Ошибка обёрнута в `*net.OpError` (`err == ctx.Err()` → false), но
+  `errors.Is(err, context.DeadlineExceeded)` → true.
+- **Один `*net.Dialer` на 100 воркеров безопасен.** `DialContext` копирует значение себе
+  (`sd := &sysDialer{Dialer: *d, ...}`, `dial.go:565`), общее состояние не мутируется.
+  На самодельную заглушку эта гарантия не распространяется.
+
 ### Worker pool (стадия 2a, task-10)
 Последовательный `for` по портам → пул воркеров. Ключевая структура:
 ```go
@@ -114,7 +146,9 @@ for _, v := range open { output = append(output, strconv.Itoa(int(v))) }
   `scanme.nmap.org`, свой `localhost`.
 
 ## Ключевые термины (English)
-- `DialTimeout` — establish TCP connection with a timeout
+- `DialTimeout` — establish TCP connection with a timeout (no cancellation, see task-12)
+- `DialContext` — same, but honours context cancellation; the only cancellable form
+- `per-operation timeout` vs `deadline` — потолок на одну операцию против бюджета всего запуска
 - `JoinHostPort` — build `host:port`, IPv6-safe
 - `Listener` / `Listen` — accept incoming TCP connections; `:0` = OS-assigned free port
 - `Conn.Close` — release the socket
