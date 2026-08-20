@@ -90,4 +90,4 @@ fmt.Println(task) // вызывает task.String() сам
 
 ## Связанные темы
 
-[[pointers]] [[interfaces]] [[fmt]]
+[[pointers]] [[interfaces]]

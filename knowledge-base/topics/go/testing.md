@@ -115,9 +115,9 @@ if !reflect.DeepEqual(got, want) {
 
 ```bash
 go test ./...                                    # все тесты
-go test -v ./cmd/pointers                        # подробный вывод
-go test -run TestPop ./cmd/pointers              # только TestPop
-go test -run TestPop/пустой_стек ./cmd/pointers  # подтест (пробел → _)
+go test -v ./sections/go/pointers                        # подробный вывод
+go test -run TestPop ./sections/go/pointers              # только TestPop
+go test -run TestPop/пустой_стек ./sections/go/pointers  # подтест (пробел → _)
 go test -race ./...                              # детектор гонок (для concurrency)
 go test -cover ./...                             # покрытие в процентах
 go test -count=1 ./...                           # без кеша: (cached) в выводе = не запускалось
@@ -130,8 +130,8 @@ go test -race -count=5 ./...                     # пять прогонов п�
 
 Форматирование:
 ```bash
-gofmt -l cmd/pointers/   # показать неправильно отформатированные
-gofmt -w cmd/pointers/   # перезаписать с правильным
+gofmt -l sections/go/pointers/   # показать неправильно отформатированные
+gofmt -w sections/go/pointers/   # перезаписать с правильным
 ```
 
 ## Тавтологические проверки — главный враг
@@ -288,7 +288,7 @@ func (d slowDialer) DialContext(ctx context.Context, _, _ string) (net.Conn, err
 ### На чём попадался
 
 - task-03 (`TestPush`): использовал `tc.want` как input — тест проходил всегда,
-  потому что клал в стек ровно то что потом проверял (это **до сих пор** в коде, см. `cmd/pointers/pointers_test.go`)
+  потому что клал в стек ровно то что потом проверял (это **до сих пор** в коде, см. `sections/go/pointers/pointers_test.go`)
 - task-05: написал `int64(0)` и `int64(3)` в литералах test struct — лишний каст, тип выводится
 - task-06: `func(s string)` где `s` не используется — должно быть `func(_ string)`
 - task-05: проверка `tc.err == errors.New("...")` всегда `false` — каждый вызов `errors.New`

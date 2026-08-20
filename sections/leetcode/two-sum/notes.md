@@ -16,7 +16,7 @@ date_completed: 2026-05-17
 Сигнатура: `func TwoSum(nums []int, target int) (int, int, bool)` — третий `bool`
 сигнализирует «нашли пару». Если не нашли → `0, 0, false`.
 
-Файл: `cmd/tasks/twosum/twosum.go` + `twosum_test.go`.
+Файл: `sections/leetcode/two-sum/twosum.go` + `twosum_test.go`.
 
 ---
 

@@ -29,8 +29,8 @@
 ## Стартовое сообщение (копи-паст в новой сессии)
 
 ```
-Подними контекст: прочитай .claude/CLAUDE.md, .claude/strategy/learning-strategy.md
-(раздел "Текущая позиция") и memory (все файлы в C:/Users/ryche/.claude/projects/c--Users-ryche-Desktop-goscout/memory/).
+Подними контекст: прочитай .claude/CLAUDE.md, knowledge-base/roadmap/00-roadmap.md
+и memory проекта — все файлы.
 
 Ответь СТРОГО в формате:
 - блок: <идентификатор>
@@ -89,6 +89,9 @@ Claude запустит скилл `give-task` и проведёт тебя че
 | Помощь при ошибке/панике | «Не компилируется» / «паника» + текст ошибки |
 | Мок-собес по пройденному вне очереди | «Проверь меня» / «мок-собес» |
 | **Алго-задача для размятия** | «Дай алго-задачку» / «давай алгоритм» / «LeetCode» |
+| **Разобрать теорию по УЖЕ написанному коду** (код работает, а почему — не уверен) | «Разбери мой код по теории» |
+| **Почитать чужой код** (stdlib) вместо написания своего | «Дай почитать код» / «как это сделано в stdlib» |
+| **Спроектировать новый блок** (активного блока нет) | «Спроектируй блок» — Claude разложит карту заданий |
 | Тема не из плана, но хочу разобрать | «Хочу разобраться в X» — Claude уточнит зачем и впишет в стратегию |
 | Конец сессии (зафиксировать всё) | «На этом всё» / «заканчиваем» |
 
@@ -102,8 +105,9 @@ Claude запустит скилл `give-task` и проведёт тебя че
 - После задачи A0 осталось 30–60 минут и брать новую тему рано
 - Хочешь тренировать собеседовательный формат
 
-Бэклог тем — в [`strategy/learning-strategy.md`](strategy/learning-strategy.md) → раздел «Algo-практика».
-Claude выберет следующую сам — ты можешь просто написать «дай алго».
+План и прогресс трека — [`sections/leetcode/00-roadmap.md`](../sections/leetcode/00-roadmap.md).
+Прогресс определяет отметка `[x]`, а не наличие папки: папка заводится при выдаче задания.
+Claude даёт **список из 2–4 задач** — выбираешь сам, что и сколько решать.
 
 Не делай марафон по LeetCode. ~1 algo-задача на 2–3 task блока A0 — норма.
 
@@ -133,7 +137,7 @@ func (s *Stack) Push(v int) {
 - спросит что было сложным (1 вопрос)
 - обновит `tasks/task-NN.md`, `topics/<тема>.md`
 - обновит roadmap, стратегию, счётчик мок-собеса
-- обновит CLAUDE.md если появилась новая папка `cmd/<имя>/`
+- обновит CLAUDE.md если появилась новая папка `sections/<домен>/<имя>/`
 
 **Без этой фразы** часть знания может остаться незафиксированной.
 
@@ -156,7 +160,7 @@ func (s *Stack) Push(v int) {
 - Claude предлагает темы вне `learning-strategy.md`
 - Забыл про мок-собес перед A0.6, начал давать A0.6
 - Игнорирует `// ?` вопросы в коде
-- Слишком быстро даёт готовый код вместо подсказок (нарушает [`feedback_think_independently`](../memory))
+- Слишком быстро даёт готовый код вместо подсказок (нарушает memory `feedback_think_independently`)
 - Пишет «отличный вопрос!» (запрещено)
 - Длинные `// A:` комментарии в коде вместо переноса в vault
 
@@ -169,8 +173,10 @@ func (s *Stack) Push(v int) {
 
 | Хочу узнать | Файл |
 |-------------|------|
-| Где я сейчас в плане | [`.claude/strategy/learning-strategy.md`](strategy/learning-strategy.md) → «Текущая позиция» |
+| Где я сейчас | [`knowledge-base/roadmap/00-roadmap.md`](../knowledge-base/roadmap/00-roadmap.md) |
+| План будущих блоков | [`knowledge-base/strategy/learning-strategy.md`](../knowledge-base/strategy/learning-strategy.md) |
 | Какие темы есть в vault | [`knowledge-base/topics/_index.md`](../knowledge-base/topics/_index.md) |
-| Журнал задач | [`knowledge-base/00-roadmap.md`](../knowledge-base/00-roadmap.md) |
+| Журнал задач и сессий | [`knowledge-base/roadmap/journal.md`](../knowledge-base/roadmap/journal.md) |
+| Что уже пройдено | [`knowledge-base/roadmap/archive.md`](../knowledge-base/roadmap/archive.md) |
 | Как Claude себя ведёт | [`CLAUDE.md`](CLAUDE.md) + скиллы рядом |
-| Прогресс по якорному проекту | [`cmd/goscout/README.md`](../cmd/goscout/README.md) |
+| Прогресс по якорному продукту | репозиторий [outpost](https://github.com/kahooso/outpost) |

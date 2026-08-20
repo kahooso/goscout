@@ -25,7 +25,7 @@
 ## Алгоритмы
 
 Параллельная ветка — мини-задачи для закрепления базы знаний.
-Подробнее — [strategy/learning-strategy.md](../../.claude/strategy/learning-strategy.md) → раздел «Algo-практика».
+Подробнее — [learning-strategy.md](../strategy/learning-strategy.md) → раздел «Algo-практика».
 
 | Паттерн | Статус | Связанный algo-task |
 |---------|--------|---------------------|

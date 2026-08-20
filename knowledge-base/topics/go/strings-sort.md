@@ -105,4 +105,4 @@ slices.SortFunc(s, func(a, b T) int) // любой тип — компарато
 
 ## Связанные темы
 
-[[slices-maps]] [[stdlib]] [[net]]
+[[slices-maps]] [[stdlib-cli]] [[net]]

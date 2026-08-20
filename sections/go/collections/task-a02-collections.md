@@ -11,7 +11,7 @@ date_completed: 2026-04-28
 
 ## Задание
 
-**Файл:** `go/tools/collections/main.go`
+**Файл:** `sections/go/collections/main.go`
 
 Написать программу-счётчик слов.
 

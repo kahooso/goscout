@@ -11,8 +11,8 @@ date_completed: 2026-05-07
 
 ## Задание
 
-**Файл:** `cmd/logparse/logparse.go`
-**Тесты:** `cmd/logparse/logparse_test.go` ✅ написаны в следующей сессии (отдельный урок по `testing`)
+**Файл:** `sections/go/logparse/logparse.go`
+**Тесты:** `sections/go/logparse/logparse_test.go` ✅ написаны в следующей сессии (отдельный урок по `testing`)
 
 Написать программу-парсер логов в CSV-формате.
 

@@ -11,7 +11,7 @@ date_completed: 2026-04-26
 
 ## Задание
 
-**Файл:** `go/tools/structs/main.go`
+**Файл:** `sections/go/structs/main.go`
 
 Написать тип `Task` — простая модель задачи из todo-списка:
 
@@ -69,4 +69,4 @@ date_completed: 2026-04-26
 
 ## Связанные темы
 
-[[structs]] [[pointers]] [[fmt]] [[interfaces]]
+[[structs]] [[pointers]] [[interfaces]]

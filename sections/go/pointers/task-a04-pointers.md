@@ -11,8 +11,8 @@ date_completed: 2026-05-09
 
 ## Задание
 
-**Файл:** `cmd/pointers/main.go`
-**Тесты:** `cmd/pointers/pointers_test.go`
+**Файл:** `sections/go/pointers/pointers.go`
+**Тесты:** `sections/go/pointers/pointers_test.go`
 
 Реализовать стек для `int`:
 1. `Push(v int)` — добавить элемент на вершину

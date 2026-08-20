@@ -101,4 +101,4 @@ AVL и Red-Black — BST с автоматической балансировк�
 
 ## Связанные темы
 
-[[slices-maps]] [[sort]]
+[[slices-maps]] [[strings-sort]]

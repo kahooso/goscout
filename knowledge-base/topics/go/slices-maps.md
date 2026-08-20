@@ -154,4 +154,4 @@ sort.Slice(keys, func(i, j int) bool {
 
 ## Связанные темы
 
-[[strings]] [[sort]] [[pointers]] [[structs]] [[testing]]
+[[strings-sort]] [[pointers]] [[structs]] [[testing]]

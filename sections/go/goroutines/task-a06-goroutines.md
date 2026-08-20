@@ -11,8 +11,8 @@ date_completed: 2026-05-16
 
 ## Задание
 
-**Файл:** `cmd/goroutines/goroutines.go`
-**Тесты:** `cmd/goroutines/goroutines_test.go`
+**Файл:** `sections/go/goroutines/goroutines.go`
+**Тесты:** `sections/go/goroutines/goroutines_test.go`
 
 Написать функцию `runAll(tasks []string, fn func(string))`:
 - Запускает одну горутину на каждый элемент `tasks`

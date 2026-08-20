@@ -11,8 +11,8 @@ date_completed: 2026-05-10
 
 ## Задание
 
-**Файл:** `cmd/errors-demo/errors.go`
-**Тесты:** `cmd/errors-demo/errors_test.go`
+**Файл:** `sections/go/errors-demo/errors.go`
+**Тесты:** `sections/go/errors-demo/errors_test.go`
 
 Написать `parseConfig(input string) (*Config, error)` — парсит строку вида
 `host=localhost port=8080 timeout=30` в структуру `Config`.
