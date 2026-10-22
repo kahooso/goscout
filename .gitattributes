@@ -3,3 +3,13 @@
 *.md text eol=lf
 *.yml text eol=lf
 *.exe binary
+
+# анонимизация вуза: имена -> заглушки при git add (см. university/README.md)
+university/**/*.md   filter=anon
+university/**/*.py   filter=anon
+university/**/*.txt  filter=anon
+university/**/*.html filter=anon
+university/**/*.csv  filter=anon
+university/**/*.c    filter=anon
+university/**/*.go   filter=anon
+university/**/*.s    filter=anon

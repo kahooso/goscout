@@ -1,0 +1,28 @@
+#!/bin/sh
+# Blocks a commit if any staged file still contains a value from .anon-map.
+# Checks the staged blobs (after the clean filter), so it catches files outside university/ too.
+
+map=".anon-map"
+if [ ! -f "$map" ]; then
+    echo "pre-commit: $map not found - create it before committing (see university/README.md)" >&2
+    exit 1
+fi
+
+status=0
+while IFS= read -r line; do
+    case "$line" in ''|'#'*) continue ;; esac
+    real=$(printf '%s' "$line" | sed 's/[[:space:]]*=[^=]*$//; s/^[[:space:]]*//')
+    [ -z "$real" ] && continue
+    hits=$( { git grep --cached -l -F -e "$real" -- . 2>/dev/null
+              git -c core.quotepath=off diff --cached --name-only --diff-filter=ACR | grep -F -e "$real"; } | sort -u)
+    if [ -n "$hits" ]; then
+        echo "pre-commit: personal data in staged files:" >&2
+        echo "$hits" | sed 's/^/  /' >&2
+        status=1
+    fi
+done < "$map"
+
+if [ "$status" -ne 0 ]; then
+    echo "pre-commit: commit blocked. Fix the files or extend .anon-map." >&2
+fi
+exit $status
