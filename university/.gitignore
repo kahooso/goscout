@@ -1,0 +1,34 @@
+# личное — только локально
+private.md
+**/private/
+
+# отчёты, материалы и бинарники — только локально (репо публичный)
+*.docx
+*.doc
+*.pdf
+*.pptx
+*.ppt
+*.xlsx
+*.ms11
+*.ms11 (Security copy)
+*.drawio
+*.zip
+*.tar.gz
+*.chm
+*.o
+*.exe
+*.mp4
+~$*
+
+# скриншоты и графики лаб (могут содержать личное); картинки конспектов в lectures/img — можно
+labs/**/*.png
+labs/**/*.jpg
+**/labs/**/*.png
+**/labs/**/*.jpg
+
+# мусор
+__pycache__/
+*.pyc
+
+# Pintos: рабочее дерево и сборка
+**/pintos/src/*/build/

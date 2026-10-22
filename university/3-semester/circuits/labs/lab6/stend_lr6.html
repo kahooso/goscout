@@ -1,0 +1,742 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Стенд ЛР-6</title>
+<style>
+:root{
+  --bg:#f6f5f1; --card:#ffffff; --ink:#1d1d1b; --muted:#6b6a66; --line:#dddbd3; --wire:#3d3d3a;
+  --soft:#efede7; --cb:#2563d9; --cc:#e0661a; --ce:#8b4fd6; --ok:#25865a; --bad:#c43a3a; --amber:#b7770a;
+  --meter:#0c0c0c; --meterInk:#f5f5f5;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#141413; --card:#1e1e1c; --ink:#ecebe6; --muted:#a3a19a; --line:#363531; --wire:#cfcdc5;
+    --soft:#2a2926; --cb:#6aa2ff; --cc:#ff8c42; --ce:#bb8dff; --ok:#4cc38a; --bad:#ff6b6b; --amber:#e3a536;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#141413; --card:#1e1e1c; --ink:#ecebe6; --muted:#a3a19a; --line:#363531; --wire:#cfcdc5;
+  --soft:#2a2926; --cb:#6aa2ff; --cc:#ff8c42; --ce:#bb8dff; --ok:#4cc38a; --bad:#ff6b6b; --amber:#e3a536;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+.wrap{max-width:1320px;margin:0 auto;padding:16px}
+h1{font-size:20px;margin:0 0 2px;font-weight:600}
+.sub{color:var(--muted);font-size:13px;margin:0 0 12px}
+.tabs{display:flex;gap:6px;margin:8px 0 12px;flex-wrap:wrap}
+.tabs button,.btn{font:inherit;font-size:14px;padding:6px 14px;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer}
+.tabs button[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.btn.small{font-size:13px;padding:4px 10px}
+.btn[aria-pressed="true"]{border-color:var(--ink);box-shadow:inset 0 0 0 1px var(--ink)}
+.grid{display:grid;grid-template-columns:minmax(0,1.65fr) minmax(0,1fr);gap:14px}
+@media (max-width:980px){.grid{grid-template-columns:1fr}}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+.card h3{font-size:13px;font-weight:600;color:var(--muted);margin:0 0 8px;text-transform:uppercase;letter-spacing:.04em}
+svg text{font-family:inherit}
+.w{stroke:var(--wire);stroke-width:1.4;fill:none;stroke-linejoin:round}
+.dot{fill:var(--wire)}
+.plate{stroke:var(--wire);stroke-width:2}
+.plate.thick{stroke-width:5}
+.lbl{fill:var(--ink);font-size:12px}
+.lbl.m{fill:var(--muted);font-size:11px}
+.lbl.b{font-weight:600}
+.pin{fill:var(--muted);font-size:11px;font-weight:600}
+.box{fill:var(--soft);stroke:var(--wire);stroke-width:1.2}
+.box.err{stroke:var(--bad);stroke-width:2}
+.flow{fill:none;stroke-dasharray:7 7;stroke-linecap:round;stroke-linejoin:round;opacity:.9}
+@keyframes run{to{stroke-dashoffset:-28}}
+@media (prefers-reduced-motion:no-preference){.flow{animation:run 1s linear infinite}}
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:13px;color:var(--muted);margin-top:4px}
+.legend i{display:inline-block;width:22px;height:0;border-top:3px dashed;vertical-align:middle;margin-right:6px}
+.ctrl{display:grid;grid-template-columns:auto 1fr auto;gap:6px 12px;align-items:center;margin-top:10px}
+.ctrl label{font-size:14px;white-space:nowrap}
+.ctrl input[type=range]{width:100%;accent-color:var(--ink)}
+.ctrl output{font-variant-numeric:tabular-nums;min-width:120px;font-size:13px;color:var(--muted)}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:10px}
+.hint{font-size:12.5px;color:var(--muted);margin:6px 0 0}
+.meters{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.mm{border:1px solid var(--line);border-radius:10px;padding:8px;background:var(--soft)}
+.mm .hd{display:flex;justify-content:space-between;font-size:12px;color:var(--muted)}
+.mm .scr{background:var(--meter);color:var(--meterInk);font:500 21px/1.2 ui-monospace,Consolas,monospace;text-align:center;padding:6px 4px;border-radius:4px;margin:5px 0;white-space:nowrap}
+.mm .modes{display:flex;gap:4px;justify-content:center}
+.mm .modes span{font-size:11px;border:1px solid var(--line);border-radius:4px;padding:0 7px;color:var(--muted)}
+.mm .modes span.on{border-color:var(--cb);color:var(--cb);font-weight:600}
+.mm .modes span.on.bad{border-color:var(--bad);color:var(--bad)}
+.mm .role{font-size:13px;text-align:center}
+.kpi{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+.kpi div{background:var(--soft);border-radius:8px;padding:6px 10px}
+.kpi .l{font-size:12px;color:var(--muted)}
+.kpi .v{font-size:16px;font-weight:600;font-variant-numeric:tabular-nums}
+.mode{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.pill{font-weight:600;padding:3px 12px;border-radius:999px;color:#fff;font-size:15px}
+.jn{display:grid;grid-template-columns:1fr auto;gap:2px 10px;font-size:13.5px;margin-top:8px}
+.jn .st{font-weight:600}
+.open{color:var(--ok)} .closed{color:var(--muted)} .half{color:var(--amber)}
+.explain p{margin:0 0 8px;font-size:14.5px}
+.explain p.err{border-left:3px solid var(--bad);padding-left:10px}
+.plots{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px}
+@media (max-width:820px){.plots{grid-template-columns:1fr}}
+.plot svg{width:100%;height:auto;display:block}
+.ax{stroke:var(--muted);stroke-width:1}
+.gl{stroke:var(--line);stroke-width:1}
+.tk{fill:var(--muted);font-size:11px}
+.fam{fill:none;stroke:var(--muted);stroke-width:1.3;opacity:.55}
+.cur{fill:none;stroke-width:2.6}
+.ll{stroke:var(--amber);stroke-width:1.4;stroke-dasharray:5 4}
+.errs label{display:flex;gap:8px;align-items:flex-start;font-size:14px;margin:4px 0}
+.errs input{margin-top:4px}
+.shot{font-size:13px;margin-top:8px;padding:6px 10px;border-radius:8px;background:var(--soft)}
+.shot b{font-variant-numeric:tabular-nums}
+.foot{font-size:12.5px;color:var(--muted);margin-top:14px}
+kbd{font:12px ui-monospace,Consolas,monospace;border:1px solid var(--line);border-bottom-width:2px;border-radius:4px;padding:0 4px;background:var(--card)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>ЛР-6 · Биполярный транзистор 2N1132A (p-n-p) — стенд</h1>
+  <p class="sub">Схемы как в Multisim. Числа считаются по той же SPICE-модели, что в <code>raschet_vse.py</code> (Multisim считает по ней же).</p>
+
+  <div class="tabs" role="tablist">
+    <button data-tab="OE" aria-pressed="true">Схема ОЭ (общий эмиттер)</button>
+    <button data-tab="OB" aria-pressed="false">Схема ОБ (общая база)</button>
+  </div>
+
+  <div class="grid">
+    <div>
+      <div class="card">
+        <svg id="sch" viewBox="0 0 790 400" width="100%" role="img" aria-label="Схема стенда">
+          <defs>
+            <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+              <path d="M0 0L10 5L0 10z" fill="var(--wire)"/>
+            </marker>
+          </defs>
+          <g id="static"></g>
+          <path class="flow" id="fIn"/>
+          <path class="flow" id="fOut"/>
+          <path class="flow" id="fCom"/>
+          <g id="dyn"></g>
+        </svg>
+        <div class="legend" id="legend"></div>
+
+        <div class="ctrl">
+          <label for="r1">R1 <kbd>A</kbd>/<kbd>Shift+A</kbd></label>
+          <input type="range" id="r1" min="0" max="100" step="1">
+          <output id="o1"></output>
+          <label for="r2">R2 <kbd>B</kbd>/<kbd>Shift+B</kbd></label>
+          <input type="range" id="r2" min="0" max="100" step="1">
+          <output id="o2"></output>
+        </div>
+        <div class="row">
+          <button class="btn small" id="bS1">S1</button>
+          <button class="btn small" id="bS2">S2</button>
+          <span class="hint" style="margin:0"><kbd>Space</kbd> — оба ключа, как в Multisim</span>
+          <span style="flex:1"></span>
+          <span class="hint" style="margin:0">Как на скрине:</span>
+          <span id="presets" class="row" style="margin:0"></span>
+        </div>
+        <div id="shot" class="shot" hidden></div>
+        <p class="hint">R1 — проценты «наоборот»: меньше % → больше напряжение на входе. R2 — прямо: больше % → больше напряжение на коллекторе.</p>
+      </div>
+
+      <div class="plots">
+        <div class="card plot"><h3 id="t1"></h3><svg id="pIn" viewBox="0 0 420 270"></svg><div class="legend" id="lgIn"></div></div>
+        <div class="card plot"><h3 id="t2"></h3><svg id="pOut" viewBox="0 0 420 270"></svg><div class="legend" id="lgOut"></div></div>
+      </div>
+      <div class="card" style="margin-top:14px">
+        <h3>Потенциалы выводов («высоты») и напряжения между ними</h3>
+        <svg id="pPot" viewBox="0 0 840 300" style="width:100%;height:auto"></svg>
+        <div class="explain" id="potTxt" style="margin-top:6px"></div>
+      </div>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:14px">
+      <div class="card">
+        <h3>Мультиметры</h3>
+        <div class="meters" id="meters"></div>
+        <div class="kpi" id="kpi"></div>
+      </div>
+      <div class="card">
+        <h3>Режим транзистора</h3>
+        <div class="mode"><span class="pill" id="pill"></span><span id="pillTxt" style="font-size:13.5px;color:var(--muted)"></span></div>
+        <div class="jn" id="jn"></div>
+      </div>
+      <div class="card explain">
+        <h3>Что сейчас происходит</h3>
+        <div id="explain"></div>
+      </div>
+      <div class="card errs">
+        <h3>Как я ошибся при сборке</h3>
+        <label><input type="checkbox" id="eF1"><span id="eF1t"></span></label>
+        <label><input type="checkbox" id="eF2"><span id="eF2t"></span></label>
+        <label><input type="checkbox" id="eV2"><span>XMM2 в режиме <b>V</b> вместо A</span></label>
+        <label><input type="checkbox" id="eV3"><span>XMM3 в режиме <b>V</b> вместо A</span></label>
+        <label id="eRevL"><input type="checkbox" id="eRev"><span>Q1 стоит зеркально: эмиттер на выходе, коллектор на входе</span></label>
+        <div class="row"><button class="btn small" id="eMine"></button><button class="btn small" id="eReset">Всё правильно</button></div>
+      </div>
+    </div>
+  </div>
+
+  <p class="foot">Как считается: модель Гуммеля–Пуна 2N1132A из базы Multisim (<code>MSCOMP_S.PRD</code>), 27 °C. Потенциометр заменён эквивалентом: R1 даёт V1·(1 − p), R2 — V2·p, внутреннее сопротивление p·(1 − p)·1 кОм.
+  Амперметр — 1 нОм, вольтметр — 1 ГОм (как в Multisim по умолчанию). Пути тока нарисованы упрощённо: через потенциометр ток показан одной дорожкой, хотя на самом деле
+  он делится между верхней и нижней частью; собственный ток потенциометра (V1/1 кОм и V2/1 кОм) не показан. Знаки на приборах — как при подключении на твоих скринах.</p>
+</div>
+
+<script>
+// ===================== модель 2N1132A (как в raschet_vse.py) =====================
+const M = {IS:8.69081e-12, BF:354.256, NF:1.23906, VAF:117.414, IKF:1.40313,
+  ISE:9.13878e-13, NE:1.52672, BR:16.818, NR:1.2902, VAR:1.01024,
+  IKR:0.0999733, ISC:9.42699e-14, NC:2.26776, RB:3.75863, RE:0.0844064, RC:0.461029};
+const VT = 1.380649e-23 * 300.15 / 1.602176634e-19, GMIN = 1e-12;
+const ex = (v, n) => Math.exp(Math.min(v / (n * VT), 80)) - 1;
+
+// токи внутреннего транзистора (SPICE3 bjtload). Считаем в координатах n-p-n:
+// у p-n-p все напряжения и токи те же, только с обратным знаком
+function jn(vbe, vbc) {
+  const cbe = M.IS * ex(vbe, M.NF), cbc = M.IS * ex(vbc, M.NR);
+  const cben = M.ISE * ex(vbe, M.NE), cbcn = M.ISC * ex(vbc, M.NC);
+  const q1 = 1 / (1 - vbc / M.VAF - vbe / M.VAR);
+  const q2 = cbe / M.IKF + cbc / M.IKR;
+  const qb = q1 * (1 + Math.sqrt(Math.max(0, 1 + 4 * q2))) / 2;
+  const ib = cbe / M.BF + cben + cbc / M.BR + cbcn + GMIN * (vbe + vbc);
+  const ic = (cbe - cbc) / qb - cbc / M.BR - cbcn - GMIN * vbc;
+  return [ib, ic];
+}
+
+function gauss(A, b) {
+  const n = b.length;
+  for (let i = 0; i < n; i++) {
+    let p = i;
+    for (let r = i + 1; r < n; r++) if (Math.abs(A[r][i]) > Math.abs(A[p][i])) p = r;
+    [A[i], A[p]] = [A[p], A[i]]; [b[i], b[p]] = [b[p], b[i]];
+    for (let r = i + 1; r < n; r++) {
+      const f = A[r][i] / A[i][i];
+      for (let c = i; c < n; c++) A[r][c] -= f * A[i][c];
+      b[r] -= f * b[i];
+    }
+  }
+  const x = new Array(n).fill(0);
+  for (let i = n - 1; i >= 0; i--) {
+    let s = b[i];
+    for (let c = i + 1; c < n; c++) s -= A[i][c] * x[c];
+    x[i] = s / A[i][i];
+  }
+  return x;
+}
+
+// pins = {B, C, E}: вывод подключён к входу (1), к выходу (2) или к земле (0).
+// in1/in2: источник ЭДС {v, r} или источник тока {i}. x = [t1, t2, b', c', e'].
+function solveOnce(pins, in1, in2, x0) {
+  const ext = (k, x) => (k === 0 ? 0 : x[k - 1]);
+  const src = (s, t) => ('i' in s ? s.i : (s.v - t) / s.r);
+  function F(x) {
+    const b = x[2], c = x[3], e = x[4];
+    const [ib, ic] = jn(b - e, b - c);
+    const iB = (ext(pins.B, x) - b) / M.RB, iC = (ext(pins.C, x) - c) / M.RC,
+          iE = (ext(pins.E, x) - e) / M.RE;
+    const into = [0, 0, 0];
+    into[pins.B] += iB; into[pins.C] += iC; into[pins.E] += iE;
+    return [src(in1, x[0]) - into[1], src(in2, x[1]) - into[2], iB - ib, iC - ic, iE + ib + ic];
+  }
+  const x = x0 ? x0.slice() : [0, 0, 0, 0, 0];
+  let ok = false;
+  for (let it = 0; it < 600; it++) {
+    const f0 = F(x);
+    const J = [[], [], [], [], []];
+    for (let k = 0; k < 5; k++) {
+      const h = 1e-7 * Math.max(1, Math.abs(x[k]));
+      const xk = x.slice(); xk[k] += h;
+      const f1 = F(xk);
+      for (let r = 0; r < 5; r++) J[r][k] = (f1[r] - f0[r]) / h;
+    }
+    const dx = gauss(J, f0.map(v => -v));
+    // шаг ограничен: прямое напряжение перехода растёт не больше чем на 0,1 В за итерацию
+    let s = 1;
+    const lim = (vo, dv) => { if (vo + dv > 0.5 && dv > 0.1) s = Math.min(s, 0.1 / dv); };
+    lim(x[2] - x[4], dx[2] - dx[4]);
+    lim(x[2] - x[3], dx[2] - dx[3]);
+    const big = Math.max(...dx.map(Math.abs));
+    if (!isFinite(big)) break;
+    if (big * s > 5) s = 5 / big;
+    for (let k = 0; k < 5; k++) x[k] += s * dx[k];
+    if (big * s < 1e-11 * Math.max(1, ...x.map(Math.abs))) { ok = true; break; }
+  }
+  const b = x[2], c = x[3], e = x[4];
+  const into = [0, 0, 0];
+  into[pins.B] += (ext(pins.B, x) - b) / M.RB;
+  into[pins.C] += (ext(pins.C, x) - c) / M.RC;
+  into[pins.E] += (ext(pins.E, x) - e) / M.RE;
+  return {x, ok, t1: x[0], t2: x[1], I1: into[1], I2: into[2], vbe: b - e, vbc: b - c};
+}
+function solve(pins, in1, in2, x0) {
+  let r = solveOnce(pins, in1, in2, x0);
+  if (!r.ok && x0) r = solveOnce(pins, in1, in2, null);
+  return r;
+}
+
+// ===================== формат =====================
+const fr = (v, d) => v.toFixed(d).replace('.', ',').replace('-', '−');
+function fI(a) {
+  const v = Math.abs(a);
+  if (v >= 1e-3) return fr(a * 1e3, v >= 1e-2 ? 2 : 3) + ' мА';
+  if (v >= 1e-6) return fr(a * 1e6, 1) + ' мкА';
+  if (v >= 1e-9) return fr(a * 1e9, 2) + ' нА';
+  return fr(a * 1e12, 1) + ' пА';
+}
+const fU = (u, d = 3) => fr(u, d) + ' В';
+function fMeter(v, unit) {          // как экран мультиметра Multisim: 697.877 mV, 9.181 mA
+  const a = Math.abs(v);
+  let p = '', k = 1;
+  if (a >= 1) {} else if (a >= 1e-3) { p = 'm'; k = 1e3; } else if (a >= 1e-6) { p = 'u'; k = 1e6; }
+  else if (a >= 1e-9) { p = 'n'; k = 1e9; } else if (a >= 1e-12) { p = 'p'; k = 1e12; }
+  let s = (v * k).toFixed(3);
+  if (s.includes('.')) s = s.replace(/0+$/, '').replace(/\.$/, '');
+  return s + ' ' + p + unit;
+}
+
+// ===================== схема =====================
+const TABS = {
+  OE: {
+    name: 'ОЭ', inPin: 'база', comPin: 'эмиттер',
+    roles: ['Uбэ', 'Iб', 'Iк', 'Uкэ'],
+    col: {in: 'var(--cb)', out: 'var(--cc)', com: 'var(--ce)'},
+    names: {in: 'Iб — ток базы', out: 'Iк — ток коллектора', com: 'Iэ — ток эмиттера = Iк + Iб'},
+    short: {in: 'Iб', out: 'Iк', com: 'Iэ'},
+    plusUp: [false, false],                       // правильная полярность: минус сверху у обеих
+    presets: [
+      {n: 'рис. 3.1', p1: 28, p2: 77, shot: ['697.877 mV', '109.802 uA', '9.181 mA', '9.924 V']},
+      {n: 'рис. 3.3', p1: 26, p2: 53, shot: ['710.169 mV', '155.098 uA', '11.424 mA', '5.104 V']}],
+  },
+  OB: {
+    name: 'ОБ', inPin: 'эмиттер', comPin: 'база',
+    roles: ['Uэб', 'Iэ', 'Iк', 'Uкб'],
+    col: {in: 'var(--ce)', out: 'var(--cc)', com: 'var(--cb)'},
+    names: {in: 'Iэ — ток эмиттера', out: 'Iк — ток коллектора', com: 'Iб — ток базы = Iэ − Iк'},
+    short: {in: 'Iэ', out: 'Iк', com: 'Iб'},
+    plusUp: [true, false],                        // V1 плюсом вверх (на эмиттер), V2 минусом вверх
+    presets: [
+      {n: 'рис. 3.5', p1: 5, p2: 67, shot: ['680.327 mV', '5.677 mA', '5.612 mA', '8.81 V']},
+      {n: 'рис. 3.7', p1: 7, p2: 73, shot: ['667.208 mV', '4.037 mA', '3.991 mA', '10.163 V']}],
+  },
+};
+const state = {
+  OE: {p1: 28, p2: 77, s1: true, s2: true, f1: false, f2: false, v2: false, v3: false, rev: false},
+  OB: {p1: 5, p2: 67, s1: true, s2: true, f1: false, f2: false, v2: false, v3: false, rev: false},
+};
+let tab = 'OE';
+const warm = {OE: null, OB: null};
+const $ = id => document.getElementById(id);
+
+const P = d => `<path class="w" d="${d}"/>`;
+const dot = (x, y) => `<circle class="dot" cx="${x}" cy="${y}" r="3"/>`;
+const T = (x, y, s, cls = 'lbl', anchor = 'start') => `<text class="${cls}" x="${x}" y="${y}" text-anchor="${anchor}">${s}</text>`;
+
+function battery(x, plusUp, name, val, side) {
+  const yT = 222, yB = 238;
+  const lng = y => `<line class="plate" x1="${x - 16}" y1="${y}" x2="${x + 16}" y2="${y}"/>`;
+  const sht = y => `<line class="plate thick" x1="${x - 8}" y1="${y}" x2="${x + 8}" y2="${y}"/>`;
+  const plusY = plusUp ? yT : yB;
+  const tx = side === 'r' ? x + 22 : x - 22, an = side === 'r' ? 'start' : 'end';
+  return P(`M${x} 110V${yT}M${x} ${yB}V360`) + (plusUp ? lng(yT) + sht(yB) : sht(yT) + lng(yB)) +
+    `<text class="lbl b" x="${side === 'r' ? x - 22 : x + 22}" y="${plusY + 4}" text-anchor="middle">+</text>` +
+    `<text class="lbl b" x="${side === 'r' ? x - 22 : x + 22}" y="${(plusUp ? yB : yT) + 4}" text-anchor="middle">−</text>` +
+    T(tx, 214, name, 'lbl b', an) + T(tx, 254, val, 'lbl', an);
+}
+function sw(x1, x2, closed, name) {
+  const lever = closed ? `M${x1} 110L${x2} 110` : `M${x1} 110L${x2 - 5} 93`;
+  return `<circle cx="${x1}" cy="110" r="3" fill="none" stroke="var(--wire)" stroke-width="1.4"/>` +
+    `<circle cx="${x2}" cy="110" r="3" fill="none" stroke="var(--wire)" stroke-width="1.4"/>` +
+    `<path d="${lever}" stroke="${closed ? 'var(--wire)' : 'var(--bad)'}" stroke-width="2" fill="none"/>` +
+    T((x1 + x2) / 2, 84, name + (closed ? '' : ' — разомкнут'), closed ? 'lbl m' : 'lbl b', 'middle');
+}
+function zig(x) {
+  let d = `M${x} 180V186`;
+  for (let i = 0; i < 11; i++) d += `L${x + (i % 2 ? -7 : 7)} ${191 + i * 10}`;
+  return d + `L${x} 300V306`;
+}
+function meterBox(cx, y, letter, name, bad, vertical, plusRight) {
+  if (vertical) {
+    return `<rect class="box${bad ? ' err' : ''}" x="${cx - 18}" y="275" width="36" height="40" rx="4"/>` +
+      `<circle cx="${cx}" cy="295" r="11" fill="var(--card)" stroke="var(--wire)"/>` +
+      T(cx, 299, letter, 'lbl b', 'middle') + T(cx - 24, 300, name, 'lbl m', 'end');
+  }
+  return `<rect class="box${bad ? ' err' : ''}" x="${cx - 28}" y="${y}" width="56" height="34" rx="4"/>` +
+    `<circle cx="${cx}" cy="${y + 17}" r="11" fill="var(--card)" stroke="${bad ? 'var(--bad)' : 'var(--wire)'}"/>` +
+    `<text class="lbl b" x="${cx}" y="${y + 21}" text-anchor="middle" style="fill:${bad ? 'var(--bad)' : 'var(--ink)'}">${letter}</text>` +
+    T(cx, y - 6, name, 'lbl m', 'middle') +
+    T(cx - 20, y + 30, plusRight ? '−' : '+', 'lbl m', 'middle') + T(cx + 20, y + 30, plusRight ? '+' : '−', 'lbl m', 'middle');
+}
+function arrowHead(tx, ty, fx, fy) {          // наконечник в точке (tx,ty), летит из (fx,fy)
+  const L = Math.hypot(tx - fx, ty - fy), ux = (tx - fx) / L, uy = (ty - fy) / L;
+  const bx = tx - 9 * ux, by = ty - 9 * uy;
+  return `<path d="M${tx} ${ty}L${bx - 4 * uy} ${by + 4 * ux}L${bx + 4 * uy} ${by - 4 * ux}z" fill="var(--wire)"/>`;
+}
+
+function wiperY(st) { return [180 + 120 * st.p1 / 100, 180 + 120 * (1 - st.p2 / 100)]; }
+
+function drawStatic(st) {
+  const tb = TABS[tab], [y1, y2] = wiperY(st);
+  const up1 = tb.plusUp[0] !== st.f1, up2 = tb.plusUp[1] !== st.f2;
+  let s = '';
+  // земля, шина, источники, ключи
+  s += P('M50 360H740') + P('M430 360V372M416 372H444M421 377H439M426 382H434');
+  s += battery(50, up1, 'V1', '1 В', 'r') + battery(740, up2, 'V2', '15 В', 'l');
+  s += P('M50 110H100M140 110H200') + sw(100, 140, st.s1, 'S1 · Space');
+  s += P('M640 110H680M720 110H740') + sw(680, 720, st.s2, 'S2 · Space');
+  // потенциометры
+  s += P('M200 110V180M200 306V360') + P(zig(200));
+  s += P(`M640 110V180M640 306V360`) + P(zig(640));
+  s += P(`M280 240H225V${y1}`) + `<path d="M225 ${y1}H210" stroke="var(--wire)" stroke-width="1.4" marker-end="url(#ar)"/>`;
+  s += P(`M580 240H615V${y2}`) + `<path d="M615 ${y2}H630" stroke="var(--wire)" stroke-width="1.4" marker-end="url(#ar)"/>`;
+  s += T(186, 172, 'R1', 'lbl b', 'end') + T(186, 188, '1 кОм', 'lbl m', 'end') + T(186, 203, 'Key = A', 'lbl m', 'end');
+  s += T(232, y1 - 6, st.p1 + ' %', 'lbl b');
+  s += T(654, 172, 'R2', 'lbl b') + T(654, 188, '1 кОм', 'lbl m') + T(654, 203, 'Key = B', 'lbl m');
+  s += T(609, y2 - 6, st.p2 + ' %', 'lbl b', 'end');
+  // вольтметры XMM1 (вход) и XMM4 (выход) — между узлом и землёй
+  s += P('M280 240V275M280 315V360') + meterBox(280, 0, 'V', 'XMM1', false, true);
+  s += P('M580 240V275M580 315V360') + meterBox(580, 0, 'V', 'XMM4', false, true);
+  s += dot(280, 240) + dot(580, 240) + dot(280, 360) + dot(580, 360) + dot(200, 360) + dot(640, 360) + dot(430, 360);
+  // амперметры XMM2 / XMM3
+  s += P('M280 240V80') + meterBox(300, 46, st.v2 ? 'V' : 'A', 'XMM2', st.v2, false, tab === 'OE');   // в ОЭ «+» XMM2 смотрит на базу, как в Multisim
+  s += P('M525 80V120H580V240') + meterBox(505, 46, st.v3 ? 'V' : 'A', 'XMM3', st.v3);
+  // транзистор
+  if (tab === 'OE') {
+    s += P('M320 80V200H400') + P('M430 170V120H485V80') + P('M430 230V360');
+    s += `<circle cx="418" cy="200" r="31" fill="none" stroke="var(--line)" stroke-width="1.2"/>`;
+    s += `<line x1="400" y1="178" x2="400" y2="222" stroke="var(--wire)" stroke-width="3.5"/>`;
+    s += P('M400 192L430 170') + P('M400 208L430 230') + arrowHead(405, 211.7, 430, 230);
+    s += T(392, 196, 'Б', 'pin', 'end') + T(438, 160, 'К', 'pin') + T(438, 248, 'Э', 'pin');
+    s += T(452, 193, 'Q1', 'lbl b') + T(452, 209, '2N1132A', 'lbl m');
+  } else {
+    s += P('M320 80V160H404') + P('M456 160H485V80') + P('M430 182V360');
+    s += `<circle cx="430" cy="166" r="30" fill="none" stroke="var(--line)" stroke-width="1.2"/>`;
+    s += `<line x1="410" y1="182" x2="450" y2="182" stroke="var(--wire)" stroke-width="3.5"/>`;
+    s += P('M404 160L419 181') + P('M441 181L456 160');
+    s += st.rev ? arrowHead(447, 176.8, 456, 160) : arrowHead(413, 176.8, 404, 160);
+    s += T(398, 150, st.rev ? 'К' : 'Э', 'pin', 'end') + T(462, 150, st.rev ? 'Э' : 'К', 'pin') + T(438, 205, 'Б', 'pin');
+    s += T(430, 124, 'Q1  2N1132A', 'lbl b', 'middle');
+    if (st.rev) s += T(430, 228, 'развёрнут!', 'lbl b', 'middle').replace('class="lbl b"', 'class="lbl b" style="fill:var(--bad)"');
+  }
+  $('static').innerHTML = s;
+}
+
+function flowPaths(st) {
+  const [y1, y2] = wiperY(st);
+  const outD = `H485V80H525V120H580V240H615V${y2}H640V110H740V360H430`;
+  if (tab === 'OE') return {
+    in: `M400 200H320V80H280V240H225V${y1}H200V110H50V360H430`,
+    out: `M430 170V120` + outD,
+    com: `M430 360V230L400 208`};
+  return {
+    in: `M430 360H50V110H200V${y1}H225V240H280V80H320V160H404L419 181`,
+    out: `M441 181L456 160` + outD,
+    com: `M430 182V360`};
+}
+
+// ===================== расчёт стенда =====================
+function compute(st, x0) {
+  const p1 = st.p1 / 100, p2 = st.p2 / 100, sg1 = tab === 'OB' ? -1 : 1;
+  const pins = tab === 'OE' ? {B: 1, C: 2, E: 0} : (st.rev ? {C: 1, E: 2, B: 0} : {E: 1, C: 2, B: 0});
+  // эквивалент потенциометра: ЭДС и внутреннее сопротивление со стороны движка
+  let V1 = st.s1 ? (1 - p1) : 0, R1 = st.s1 ? p1 * (1 - p1) * 1000 : (1 - p1) * 1000;
+  let V2 = st.s2 ? 15 * p2 : 0, R2 = st.s2 ? p2 * (1 - p2) * 1000 : p2 * 1000;
+  R1 = Math.max(R1, 1e-3); R2 = Math.max(R2, 1e-3);
+  V1 *= sg1 * (st.f1 ? -1 : 1); V2 *= st.f2 ? -1 : 1;
+  const ra2 = st.v2 ? 1e9 : 0, ra3 = st.v3 ? 1e9 : 0;
+  const r = solve(pins, {v: V1, r: R1 + ra2}, {v: V2, r: R2 + ra3}, x0);
+  const W1 = V1 - r.I1 * R1, W2 = V2 - r.I2 * R2;
+  const Iin = sg1 * r.I1, Iout = r.I2, Icom = tab === 'OE' ? Iin + Iout : Iin - Iout;
+  return {r, pins, sg1, V1, R1, V2, R2, W1, W2, Iin, Iout, Icom,
+    m: [sg1 * W1, st.v2 ? sg1 * r.I1 * 1e9 : Iin, st.v3 ? r.I2 * 1e9 : Iout, W2]};
+}
+
+function modeOf(r) {
+  const e = r.vbe > 0.45, c = r.vbc > 0.45;
+  if (e && !c) return {k: 'act', n: 'Активный', col: 'var(--ok)', t: 'эмиттерный открыт, коллекторный закрыт — транзистор усиливает'};
+  if (e && c) return {k: 'sat', n: 'Насыщение', col: 'var(--amber)', t: 'открыты оба перехода — «замкнутый ключ»'};
+  if (!e && c) return {k: 'inv', n: 'Инверсный', col: 'var(--bad)', t: 'открыт коллекторный, закрыт эмиттерный — транзистор «задом наперёд»'};
+  return {k: 'cut', n: 'Отсечка', col: 'var(--muted)', t: 'оба перехода закрыты — «разомкнутый ключ», токов нет'};
+}
+function jState(v) {
+  if (v > 0.6) return ['открыт', 'open'];
+  if (v > 0.45) return ['приоткрыт', 'half'];
+  if (v > 0) return ['закрыт (прямое, но мало)', 'closed'];
+  return ['закрыт (обратное)', 'closed'];
+}
+
+// ===================== графики =====================
+function ticks(a, b, n = 5) {
+  const raw = (b - a) / n, p = Math.pow(10, Math.floor(Math.log10(raw))), m = raw / p;
+  const st = (m < 1.5 ? 1 : m < 3 ? 2 : m < 7 ? 5 : 10) * p, out = [];
+  for (let v = Math.ceil(a / st) * st; v <= b + 1e-9; v += st) out.push(+v.toFixed(10));
+  return out;
+}
+function plot(svg, cfg) {
+  const Wd = 420, Ht = 270, L = 52, R = 14, Tp = 12, B = 40;
+  const [x0, x1] = cfg.xr, [y0, y1] = cfg.yr;
+  const sx = x => L + (x - x0) / (x1 - x0) * (Wd - L - R), sy = y => Ht - B - (y - y0) / (y1 - y0) * (Ht - Tp - B);
+  const id = svg.id + 'c';
+  let s = `<defs><clipPath id="${id}"><rect x="${L}" y="${Tp}" width="${Wd - L - R}" height="${Ht - Tp - B}"/></clipPath></defs>`;
+  for (const t of ticks(x0, x1)) s += `<line class="gl" x1="${sx(t)}" x2="${sx(t)}" y1="${Tp}" y2="${Ht - B}"/><text class="tk" x="${sx(t)}" y="${Ht - B + 14}" text-anchor="middle">${String(t).replace('.', ',').replace('-', '−')}</text>`;
+  for (const t of ticks(y0, y1)) s += `<line class="gl" x1="${L}" x2="${Wd - R}" y1="${sy(t)}" y2="${sy(t)}"/><text class="tk" x="${L - 6}" y="${sy(t) + 4}" text-anchor="end">${String(t).replace('.', ',')}</text>`;
+  s += `<line class="ax" x1="${L}" x2="${Wd - R}" y1="${sy(Math.max(0, y0))}" y2="${sy(Math.max(0, y0))}"/>`;
+  if (x0 < 0) s += `<line class="ax" x1="${sx(0)}" x2="${sx(0)}" y1="${Tp}" y2="${Ht - B}"/>`;
+  s += `<text class="tk" x="${(L + Wd - R) / 2}" y="${Ht - 6}" text-anchor="middle">${cfg.xl}</text>`;
+  s += `<text class="tk" x="12" y="${(Tp + Ht - B) / 2}" text-anchor="middle" transform="rotate(-90 12 ${(Tp + Ht - B) / 2})">${cfg.yl}</text>`;
+  s += `<g clip-path="url(#${id})">`;
+  if (cfg.line) s += `<line class="ll" x1="${sx(cfg.line[0][0])}" y1="${sy(cfg.line[0][1])}" x2="${sx(cfg.line[1][0])}" y2="${sy(cfg.line[1][1])}"/>`;
+  for (const c of cfg.series) {
+    const pts = c.pts.map(([x, y]) => `${sx(x).toFixed(1)},${sy(y).toFixed(1)}`).join(' ');
+    s += `<polyline class="${c.cls}" points="${pts}" ${c.style ? `style="${c.style}"` : ''}/>`;
+    if (c.label) { const [lx, ly] = c.pts[c.pts.length - 1]; s += `<text class="tk" x="${sx(lx) - 4}" y="${sy(ly) - 5}" text-anchor="end">${c.label}</text>`; }
+  }
+  s += `</g>`;
+  if (cfg.pt) {
+    const [px, py] = cfg.pt, inside = px >= x0 && px <= x1 && py >= y0 && py <= y1;
+    const cx = Math.min(Math.max(sx(px), L), Wd - R), cy = Math.min(Math.max(sy(py), Tp), Ht - B);
+    s += `<circle cx="${cx}" cy="${cy}" r="${inside ? 6 : 5}" fill="${inside ? cfg.ptCol : 'none'}" stroke="${cfg.ptCol}" stroke-width="2.5"/>`;
+    if (!inside) s += `<text class="tk" x="${(L + Wd - R) / 2}" y="${Tp + 14}" text-anchor="middle" style="fill:var(--bad)">рабочая точка за пределами графика</text>`;
+  }
+  svg.innerHTML = s;
+}
+const lin = (a, b, n) => Array.from({length: n}, (_, i) => a + (b - a) * i / (n - 1));
+const UIN = lin(0.45, 0.745, 30);
+const UOUT = {OE: [...lin(0, 0.5, 21), ...lin(0.75, 15, 20)], OB: [...lin(-1, 0.5, 31), ...lin(0.75, 15, 20)]};
+
+function inCurve(pins, sg1, t2) {
+  let x = null;
+  return UIN.map(u => { const r = solve(pins, {v: sg1 * u, r: 1e-3}, {v: t2, r: 1e-3}, x); x = r.x; return [u, sg1 * r.I1]; });
+}
+function outCurve(pins, i1) {
+  let x = null;
+  return UOUT[tab].map(u => { const r = solve(pins, {i: i1}, {v: u, r: 1e-3}, x); x = r.x; return [u, r.I2]; });
+}
+const famCache = {};
+function families() {
+  if (famCache[tab]) return famCache[tab];
+  const sg1 = tab === 'OB' ? -1 : 1, pins = tab === 'OE' ? {B: 1, C: 2, E: 0} : {E: 1, C: 2, B: 0};
+  const fin = [15, 10, 5].map(u => ({u, pts: inCurve(pins, sg1, u)}));
+  const zero = tab === 'OE' ? inCurve(pins, sg1, 0) : null;
+  const setI = tab === 'OE' ? [1e-4, 1.5e-4, 2e-4] : [2e-3, 4e-3, 8e-3];
+  const fout = setI.map(i => ({i, pts: outCurve(pins, sg1 * i)}));
+  return (famCache[tab] = {fin, zero, fout});
+}
+
+// ===================== обновление =====================
+function explain(st, d, md) {
+  const tb = TABS[tab], ps = [], E = s => ps.push(`<p class="err">${s}</p>`), N = s => ps.push(`<p>${s}</p>`);
+  const r = d.r, oe = tab === 'OE';
+  const Uin = d.m[0], Uout = d.m[3];
+  if (!st.s1) E('S1 разомкнут — у входной цепи нет питания. Нажми <kbd>Space</kbd> или кнопку S1.');
+  if (!st.s2) E('S2 разомкнут — на коллектор не подано напряжение, выход висит только на нижней части R2.');
+  if (st.v2) E(`XMM2 в режиме <b>V</b>. Вольтметр внутри — это сопротивление 1 ГОм (миллиард ом), и он стоит <b>в разрыве</b> входной цепи. Получился почти обрыв:
+    входной ток всего ${fI(Math.abs(d.Iin))}. Нет входного тока → эмиттерный переход не открывается → нет и тока коллектора (${fI(Math.abs(d.Iout))}).
+    XMM2 сейчас показывает ${fU(d.m[1], 3)} — это напряжение, которое «застряло» на огромном сопротивлении. Правило: <b>амперметр — в разрыв цепи, вольтметр — между двумя точками</b>.`);
+  if (st.v3) E(`XMM3 в режиме <b>V</b> — в разрыве цепи коллектора стоит 1 ГОм. Коллектор почти отрезан: Iк = ${fI(Math.abs(d.Iout))}.
+    XMM3 и XMM4 показывают почти одно и то же (${fU(d.m[2], 2)} и ${fU(Uout, 2)}): тока нет — значит, на R2 ничего не падает.` +
+    (oe ? ` Заметь: ток базы вырос до ${fI(d.Iin)} — эмиттерному току теперь некуда идти, кроме базы.` : ` Весь ток эмиттера теперь уходит в базу: Iб = ${fI(d.Icom)}.`));
+  if (st.f1 || st.f2) {
+    const which = st.f1 && st.f2 ? 'Обе батарейки перевёрнуты' : st.f1 ? 'V1 перевёрнута' : 'V2 перевёрнута';
+    E(`${which}. У p-n-p эмиттер должен быть «плюсовее» базы, а коллектор — «минусовее». ` +
+      (st.f1 ? `Сейчас на эмиттерном переходе ${fU(r.vbe, 2)} — ${r.vbe < 0 ? 'в обратную сторону' : 'мало'}, он закрыт. ` : '') +
+      (st.f2 ? `На коллекторном переходе ${fU(r.vbc, 2)} — ${r.vbc > 0.45 ? 'он открылся в прямую сторону' : 'он закрыт'}. ` : '') +
+      `Выдаёт ошибку знак «−» на ${Uin < 0 ? 'XMM1' : 'XMM4'}.`);
+  }
+  if (st.rev && tab === 'OB') E(`Q1 развёрнут: ко входу подключён коллектор, к выходу — эмиттер. Токи текут, но транзистор работает «задом наперёд» — открыт
+    коллекторный переход, а эмиттерный закрыт и стоит под обратным напряжением ${fU(-r.vbe, 1)}. Реальный маломощный транзистор выдерживает на эмиттерном
+    переходе в обратную сторону обычно всего около 5 В — он бы, скорее всего, пробился. В модели Multisim пробоя нет, поэтому числа похожи на нормальные
+    (Iвх = ${fI(d.Iin)}, Iвых = ${fI(d.Iout)}) — ошибку видно только по схеме: стрелка эмиттера должна быть со стороны входа (V1).`);
+
+  if (md.k === 'cut') {
+    N(`Эмиттерный переход закрыт: на нём ${fU(r.vbe, 3)}, а заметный ток появляется примерно с 0,6 В. Входной ток почти ноль (${fI(Math.abs(d.Iin))}) →
+      тока коллектора тоже нет (${fI(Math.abs(d.Iout))}). Это <b>отсечка</b>: транзистор — как разомкнутый выключатель.` +
+      (!st.v2 && !st.f1 && st.s1 ? ' Чтобы открыть — уменьшай проценты R1 (у R1 они «наоборот»).' : ''));
+  } else if (md.k === 'act') {
+    if (oe) N(`<b>Активный режим.</b> Эмиттерный переход открыт (Uбэ = ${fU(Uin)}), коллекторный закрыт — на нём ${fU(r.vbc, 2)} (в обратную сторону).
+      Маленький ток базы Iб = ${fI(d.Iin)} «разрешает» ток коллектора Iк = ${fI(d.Iout)} — в β = ${fr(d.Iout / d.Iin, 1)} раза больше.
+      Эмиттер отдаёт их сумму: Iэ = Iк + Iб = ${fI(d.Icom)}.`);
+    else N(`<b>Активный режим.</b> Эмиттерный переход открыт (Uэб = ${fU(Uin)}), коллекторный закрыт (${fU(r.vbc, 2)}). Из эмиттера в базу входит
+      Iэ = ${fI(d.Iin)}; база тонкая, и почти всё пролетает дальше в коллектор: Iк = ${fI(d.Iout)}, α = Iк/Iэ = ${fr(d.Iout / d.Iin, 4)}.
+      В вывод базы уходит только разница Iб = ${fI(d.Icom)} — около ${fr(100 * d.Icom / d.Iin, 1)} % от Iэ.`);
+    if (Math.abs(d.Iout) > 0.05) N(`Ток коллектора ${fI(Math.abs(d.Iout))} — для маломощного транзистора это очень много: настоящий бы перегрелся. Модель Multisim не горит, поэтому крайние положения ручек в лабе не используют.`);
+    if (r.vbe < 0.6) N(`${oe ? 'Uбэ' : 'Uэб'} ещё меньше 0,6 В — переход только приоткрыт, токи маленькие. На входном графике точка сидит на пологом участке до «колена».`);
+    const drop = Math.abs(d.V2) - Math.abs(Uout);
+    if (st.s2 && !st.v3 && drop > 0.05) N(`Почему XMM4 показывает ${fU(Uout, 2)}, а не ${fU(Math.abs(d.V2), 2)}, сколько даёт R2 без нагрузки: ток коллектора идёт через часть R2,
+      и на ней теряется ${fU(drop, 2)}. Поэтому после каждого поворота R1 приходилось подкручивать R2. На графике справа это пунктирная «линия R2»: точка всегда на ней.`);
+  } else if (md.k === 'sat') {
+    N(`<b>Насыщение:</b> открыты оба перехода. ${oe ? `Uкэ всего ${fU(Uout, 2)}, и` : 'На'} коллекторном переходе прямое напряжение ${fU(r.vbc, 2)}.
+      Коллектор больше не «забирает» всё, что даёт ${oe ? 'база' : 'эмиттер'}: ${oe ? `Iк/Iб = ${fr(Math.abs(d.Iout / d.Iin), 1)} — меньше обычного β ≈ 80` : `Iк/Iэ = ${fr(d.Iout / d.Iin, 3)}`}.
+      Транзистор — как замкнутый выключатель.` + (oe && !st.v3 ? ' Подними Uкэ ручкой R2 (больше %) — выйдешь в активный режим.' : ''));
+  } else {
+    N(`<b>Инверсный режим:</b> открыт коллекторный переход (${fU(r.vbc, 2)}), закрыт эмиттерный (${fU(r.vbe, 2)}). Транзистор работает «задом наперёд»:
+      роль эмиттера играет коллектор. Приборы что-то показывают, но это не те токи, которые мы изучаем.`);
+  }
+  return ps.join('');
+}
+
+function render() {
+  const st = state[tab], tb = TABS[tab];
+  let d = compute(st, warm[tab]);
+  warm[tab] = d.r.x;
+  const md = modeOf(d.r);
+  drawStatic(st);
+
+  // пути токов
+  const fp = flowPaths(st), cols = st.rev && tab === 'OB'
+    ? {in: 'var(--cc)', out: 'var(--ce)', com: 'var(--cb)'} : tb.col;
+  for (const [k, id, I] of [['in', 'fIn', d.Iin], ['out', 'fOut', d.Iout], ['com', 'fCom', d.Icom]]) {
+    const el = $(id), a = Math.abs(I);
+    el.setAttribute('d', fp[k]);
+    el.setAttribute('stroke', cols[k]);
+    el.style.display = a < 5e-9 ? 'none' : '';
+    el.setAttribute('stroke-width', (1.6 + 5.5 * Math.sqrt(Math.min(a, 0.025) / 0.025)).toFixed(2));
+    el.style.animationDuration = Math.min(8, Math.max(0.35, 0.9 * Math.pow(1e-3 / Math.max(a, 1e-12), 0.3))).toFixed(2) + 's';
+    el.style.animationDirection = I < 0 ? 'reverse' : 'normal';
+  }
+  const sh = st.rev && tab === 'OB' ? {in: 'Iк*', out: 'Iэ*', com: 'Iб'} : tb.short;
+  const lab = (x, y, k, I) => `<text x="${x}" y="${y}" style="fill:${cols[k]};font-weight:600;font-size:12.5px">${sh[k]} = ${fI(Math.abs(I))}</text>`;
+  $('dyn').innerHTML = (tab === 'OE'
+    ? lab(326, 140, 'in', d.Iin) + lab(438, 312, 'com', d.Icom)
+    : lab(326, 222, 'in', d.Iin) + lab(438, 300, 'com', d.Icom)) + lab(650, 342, 'out', d.Iout);
+  $('legend').innerHTML = ['in', 'out', 'com'].map(k => `<span><i style="border-color:${cols[k]}"></i>${st.rev && tab === 'OB' ? {in: 'вход (сейчас через коллектор)', out: 'выход (сейчас через эмиттер)', com: 'Iб — ток базы'}[k] : tb.names[k]}</span>`).join('') +
+    '<span>толщина и скорость — по величине тока</span>';
+
+  // мультиметры
+  const modesA = [false, !st.v2, !st.v3, false];
+  $('meters').innerHTML = d.m.map((v, i) => {
+    const isA = modesA[i], bad = (i === 1 && st.v2) || (i === 2 && st.v3);
+    return `<div class="mm"><div class="hd"><span>XMM${i + 1}</span><span>${tb.roles[i]}</span></div>
+      <div class="scr">${fMeter(v, isA ? 'A' : 'V')}</div>
+      <div class="modes"><span class="${isA ? 'on' : ''}">A</span><span class="${!isA ? 'on' + (bad ? ' bad' : '') : ''}">V</span><span>Ω</span><span>dB</span><span>—</span></div></div>`;
+  }).join('');
+  const kp = tab === 'OE'
+    ? [['Iэ = Iк + Iб', `${fr(d.Iout * 1e3, 3)} + ${fr(d.Iin * 1e3, 3)} = ${fr(d.Icom * 1e3, 3)} мА`],
+       ['β = Iк / Iб', Math.abs(d.Iin) > 1e-8 ? fr(d.Iout / d.Iin, 1) : '—']]
+    : [['Iэ = Iк + Iб', `${fr(d.Iin * 1e3, 3)} = ${fr(d.Iout * 1e3, 3)} + ${fr(d.Icom * 1e3, 3)} мА`],
+       ['α = Iк / Iэ  (β = α/(1−α))', Math.abs(d.Iin) > 1e-8 ? `${fr(d.Iout / d.Iin, 4)}  (${fr((d.Iout / d.Iin) / (1 - d.Iout / d.Iin), 1)})` : '—']];
+  $('kpi').innerHTML = kp.map(([l, v]) => `<div><div class="l">${l}</div><div class="v">${v}</div></div>`).join('');
+
+  // режим
+  $('pill').textContent = md.n; $('pill').style.background = md.col; $('pillTxt').textContent = md.t;
+  const [es, ec] = jState(d.r.vbe), [cs, cc] = jState(d.r.vbc);
+  $('jn').innerHTML = `<span>Эмиттерный переход (Э–Б): ${fU(d.r.vbe, 3)}</span><span class="st ${ec}">${es}</span>
+    <span>Коллекторный переход (К–Б): ${fU(d.r.vbc, 2)}</span><span class="st ${cc}">${cs}</span>`;
+  $('explain').innerHTML = explain(st, d, md);
+
+  // ползунки и пресеты
+  $('r1').value = st.p1; $('r2').value = st.p2;
+  $('o1').textContent = `${st.p1} %  → ${fU(Math.abs(d.V1), 2)} холостой`;
+  $('o2').textContent = `${st.p2} %  → ${fU(Math.abs(d.V2), 2)} холостой`;
+  $('bS1').textContent = 'S1 ' + (st.s1 ? 'замкнут' : 'разомкнут'); $('bS1').setAttribute('aria-pressed', st.s1);
+  $('bS2').textContent = 'S2 ' + (st.s2 ? 'замкнут' : 'разомкнут'); $('bS2').setAttribute('aria-pressed', st.s2);
+  const clean = st.s1 && st.s2 && !st.f1 && !st.f2 && !st.v2 && !st.v3 && !st.rev;
+  const pr = tb.presets.find(p => p.p1 === st.p1 && p.p2 === st.p2);
+  $('shot').hidden = !(pr && clean);
+  if (pr && clean) $('shot').innerHTML = `Твой скрин (${pr.n}): <b>${pr.shot.join(' · ')}</b><br>Стенд: <b>${d.m.map((v, i) => fMeter(v, i === 1 || i === 2 ? 'A' : 'V')).join(' · ')}</b>`;
+
+  // ошибки
+  $('eF1').checked = st.f1; $('eF2').checked = st.f2; $('eV2').checked = st.v2; $('eV3').checked = st.v3; $('eRev').checked = st.rev;
+  $('eRevL').style.display = tab === 'OB' ? '' : 'none';
+  $('eF1t').innerHTML = `V1 перевёрнута (правильно: ${tb.plusUp[0] ? 'плюс' : 'минус'} сверху)`;
+  $('eF2t').innerHTML = `V2 перевёрнута (правильно: ${tb.plusUp[1] ? 'плюс' : 'минус'} сверху)`;
+  $('eMine').textContent = tab === 'OE' ? 'Как было у меня в ОЭ: обе батарейки плюсом вверх' : 'Как было у меня в ОБ: транзистор зеркально';
+
+  potPanel(d);
+
+  // графики
+  const fam = families(), sg1 = d.sg1, ptCol = tb.col.in;
+  const inS = fam.fin.map(f => ({pts: f.pts, cls: 'fam'}));
+  if (fam.zero) inS.push({pts: fam.zero, cls: 'fam', style: 'stroke-dasharray:4 3;opacity:.8'});
+  const curIn = inCurve(d.pins, sg1, d.r.t2);
+  inS.push({pts: curIn, cls: 'cur', style: `stroke:${ptCol}`});
+  const kIn = oeTab() ? 1e6 : 1e3;
+  const ymIn = Math.max(...fam.fin[0].pts.map(p => p[1])) * kIn * 1.05;
+  plot($('pIn'), {xr: [0.45, 0.75], yr: [0, ymIn], xl: oeTab() ? 'Uбэ, В' : 'Uэб, В', yl: oeTab() ? 'Iб, мкА' : 'Iэ, мА',
+    series: inS.map(s => ({...s, pts: s.pts.map(([x, y]) => [x, y * kIn])})), pt: [sg1 * d.r.t1, d.Iin * kIn], ptCol});
+  $('t1').textContent = oeTab() ? 'Входная ВАХ: Iб(Uбэ)' : 'Входная ВАХ: Iэ(Uэб)';
+  $('lgIn').innerHTML = `<span><i style="border-color:${ptCol}"></i>при нынешнем ${oeTab() ? 'Uкэ' : 'Uкб'} = ${fU(d.r.t2, 2)}</span><span><i style="border-color:var(--muted)"></i>как в таблице 3.${oeTab() ? 1 : 3}</span>` +
+    (oeTab() ? '<span>серые 15 / 10 / 5 В лежат друг на друге — это и есть вывод «не зависит от Uкэ»; серый пунктир — Uкэ = 0 (насыщение), он левее</span>'
+             : '<span>серые: Uкб = 15 / 10 / 5 В — чем больше Uкб, тем кривая выше</span>');
+
+  const outS = fam.fout.map(f => ({pts: f.pts.map(([x, y]) => [x, y * 1e3]), cls: 'fam', label: (oeTab() ? 'Iб ' + fr(f.i * 1e3, 2) : 'Iэ ' + fr(f.i * 1e3, 0)) + ' мА'}));
+  if (Math.abs(d.r.I1) > 1e-7 && !st.v2) outS.push({pts: outCurve(d.pins, d.r.I1).map(([x, y]) => [x, y * 1e3]), cls: 'cur', style: `stroke:${tb.col.out}`});
+  const ymOut = Math.max(oeTab() ? 20 : 9, d.Iout * 1e3 * 1.1);
+  const Isc = d.V2 / (d.R2 + (st.v3 ? 1e9 : 0)) * 1e3;
+  plot($('pOut'), {xr: oeTab() ? [0, 15] : [-1, 15], yr: [0, ymOut], xl: oeTab() ? 'Uкэ, В' : 'Uкб, В', yl: 'Iк, мА',
+    series: outS, line: [[d.V2, 0], [0, Isc]], pt: [d.m[3], d.Iout * 1e3], ptCol: tb.col.out});
+  $('t2').textContent = oeTab() ? 'Выходная ВАХ: Iк(Uкэ)' : 'Выходная ВАХ: Iк(Uкб)';
+  $('lgOut').innerHTML = `<span><i style="border-color:${tb.col.out}"></i>при нынешнем ${oeTab() ? 'Iб' : 'Iэ'} = ${fI(Math.abs(d.Iin))}</span><span><i style="border-color:var(--muted)"></i>как в таблице 3.${oeTab() ? 2 : 4}</span><span><i style="border-color:var(--amber)"></i>линия R2: все точки, где может стоять схема при этом R2</span>`;
+}
+const oeTab = () => tab === 'OE';
+
+// «высоты»: настоящий потенциал каждого вывода p-n-p (в n-p-n-координатах всё с обратным знаком)
+function potPanel(d) {
+  const ext = k => (k === 0 ? 0 : k === 1 ? d.r.t1 : d.r.t2);
+  const phi = {'Э': -ext(d.pins.E), 'Б': -ext(d.pins.B), 'К': -ext(d.pins.C)};
+  const X = {'Э': 170, 'Б': 400, 'К': 630};
+  const vals = [0, ...Object.values(phi)], lo = Math.min(...vals) - 0.8, hi = Math.max(...vals) + 0.8;
+  const top = 18, h = 250, y = v => top + (hi - v) / (hi - lo) * h;
+  let s = `<line x1="40" x2="820" y1="${y(0)}" y2="${y(0)}" stroke="var(--muted)" stroke-dasharray="4 4"/>` +
+    `<text x="44" y="${y(0) - 5}" font-size="11" fill="var(--muted)">земля, 0 В</text>`;
+  for (const k of ['Э', 'Б', 'К']) {
+    const yy = y(phi[k]), col = {'Э': 'var(--ce)', 'Б': 'var(--cb)', 'К': 'var(--cc)'}[k];
+    s += `<line x1="${X[k] - 55}" x2="${X[k] + 55}" y1="${yy}" y2="${yy}" stroke="${col}" stroke-width="4" stroke-linecap="round"/>` +
+      `<text x="${X[k]}" y="${yy - 9}" font-size="13" font-weight="600" fill="${col}" text-anchor="middle">${k}: φ = ${fr(phi[k], 3)} В</text>`;
+  }
+  // стрелка от второй буквы к первой: U_XY = φX − φY
+  const pairs = oeTab() ? [['Б', 'Э', 285], ['К', 'Б', 515], ['К', 'Э', 760]] : [['Э', 'Б', 285], ['К', 'Б', 515], ['К', 'Э', 760]];
+  for (const [a, b, xx] of pairs) {
+    const u = phi[a] - phi[b], y1 = y(phi[b]), y2 = y(phi[a]);
+    s += `<line x1="${xx}" x2="${xx}" y1="${y1}" y2="${y2}" stroke="var(--ink)" stroke-width="1.6"/>`;
+    if (Math.abs(y2 - y1) > 8) s += arrowHead(xx, y2, xx, y1);
+    if (xx === 760) s += `<line x1="${X['Э'] + 55}" x2="${xx}" y1="${y(phi['Э'])}" y2="${y(phi['Э'])}" stroke="var(--line)" stroke-dasharray="3 3"/><line x1="${X['К'] + 55}" x2="${xx}" y1="${y(phi['К'])}" y2="${y(phi['К'])}" stroke="var(--line)" stroke-dasharray="3 3"/>`;
+    const short = Math.abs(y2 - y1) < 30, ty = short || xx === 760 ? Math.max(y1, y2) + 18 : (y1 + y2) / 2 + 4;
+    const tx = xx === 760 ? 830 : short ? xx - 70 : xx + 6, an = xx === 760 ? 'end' : 'start';
+    s += `<text x="${tx}" y="${ty}" font-size="12.5" fill="var(--ink)" text-anchor="${an}">U${a.toLowerCase()}${b.toLowerCase()} = φ${a} − φ${b} = ${fr(u, 3)} В</text>`;
+  }
+  $('pPot').innerHTML = s;
+  const uKB = phi['К'] - phi['Б'], uEB = phi['Э'] - phi['Б'];
+  $('potTxt').innerHTML = `<p>Читай <b>U<sub>КБ</sub></b> как «на сколько коллектор <b>выше</b> базы»: φ<sub>К</sub> − φ<sub>Б</sub>. Первая буква — где меряем, вторая — от чего отсчитываем. Стрелка идёт от второй буквы к первой.
+    Сейчас коллектор ${uKB < 0 ? '<b>ниже</b>' : '<b>выше</b>'} базы на ${fr(Math.abs(uKB), 2)} В → U<sub>КБ</sub> = ${fr(uKB, 2)} В.
+    ${uKB < -0.1 ? 'Минус на p-коллекторе относительно n-базы — коллекторный переход закрыт.' : 'Коллектор не ниже базы — коллекторный переход открывается (насыщение).'}</p>
+    <p>Эмиттер ${uEB > 0 ? 'выше' : 'ниже'} базы на ${fr(Math.abs(uEB), 3)} В → ${uEB > 0.45 ? 'плюс на p-эмиттере, эмиттерный переход открыт.' : 'эмиттерный переход закрыт.'}
+    Напряжения складываются, как высоты: U<sub>КЭ</sub> = U<sub>КБ</sub> + U<sub>БЭ</sub>. Поменять буквы местами — сменить знак: U<sub>БК</sub> = −U<sub>КБ</sub>. В таблицах отчёта записаны модули, без знака.</p>`;
+}
+
+// ===================== управление =====================
+let raf = 0;
+const schedule = () => { if (!raf) raf = requestAnimationFrame(() => { raf = 0; render(); }); };
+document.querySelectorAll('.tabs button').forEach(b => b.onclick = () => {
+  tab = b.dataset.tab;
+  document.querySelectorAll('.tabs button').forEach(x => x.setAttribute('aria-pressed', x === b));
+  $('presets').innerHTML = TABS[tab].presets.map((p, i) => `<button class="btn small" data-p="${i}">${p.n}</button>`).join('');
+  $('presets').querySelectorAll('button').forEach(x => x.onclick = () => {
+    const p = TABS[tab].presets[+x.dataset.p]; Object.assign(state[tab], {p1: p.p1, p2: p.p2}); schedule();
+  });
+  render();
+});
+$('r1').oninput = e => { state[tab].p1 = +e.target.value; schedule(); };
+$('r2').oninput = e => { state[tab].p2 = +e.target.value; schedule(); };
+$('bS1').onclick = () => { state[tab].s1 = !state[tab].s1; schedule(); };
+$('bS2').onclick = () => { state[tab].s2 = !state[tab].s2; schedule(); };
+for (const [id, k] of [['eF1', 'f1'], ['eF2', 'f2'], ['eV2', 'v2'], ['eV3', 'v3'], ['eRev', 'rev']])
+  $(id).onchange = e => { state[tab][k] = e.target.checked; warm[tab] = null; schedule(); };
+$('eMine').onclick = () => {
+  Object.assign(state[tab], {f1: false, f2: false, v2: false, v3: false, rev: false}, tab === 'OE' ? {f1: true, f2: true} : {rev: true});
+  warm[tab] = null; schedule();
+};
+$('eReset').onclick = () => { Object.assign(state[tab], {f1: false, f2: false, v2: false, v3: false, rev: false, s1: true, s2: true}); warm[tab] = null; schedule(); };
+document.addEventListener('keydown', e => {
+  if (e.ctrlKey || e.altKey || e.metaKey) return;
+  const st = state[tab], k = e.key.toLowerCase();
+  if (k === 'a') st.p1 = Math.min(100, Math.max(0, st.p1 + (e.shiftKey ? -1 : 1)));
+  else if (k === 'b') st.p2 = Math.min(100, Math.max(0, st.p2 + (e.shiftKey ? -1 : 1)));
+  else if (e.key === ' ') { e.preventDefault(); st.s1 = !st.s1; st.s2 = !st.s2; }
+  else return;
+  schedule();
+});
+document.querySelector('.tabs button').click();
+</script>
+</body>
+</html>

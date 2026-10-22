@@ -1,0 +1,397 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>p-n-переход</title>
+<style>
+:root{
+  --bg:#f6f5f1; --card:#fff; --ink:#1d1d1b; --muted:#6b6a66; --line:#dddbd3; --wire:#55544f;
+  --p:#f7dccd; --n:#d5e3f7; --zone:#ffffff; --hole:#d2431a; --el:#2160d4; --flash:#e3a400; --ok:#25865a; --amber:#b7770a;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#141413; --card:#1e1e1c; --ink:#ecebe6; --muted:#a3a19a; --line:#363531; --wire:#b9b7af;
+    --p:#45281c; --n:#1b2c45; --zone:#141413; --hole:#ff8a5c; --el:#7fb0ff; --flash:#ffd34d; --ok:#4cc38a; --amber:#e3a536;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#141413; --card:#1e1e1c; --ink:#ecebe6; --muted:#a3a19a; --line:#363531; --wire:#b9b7af;
+  --p:#45281c; --n:#1b2c45; --zone:#141413; --hole:#ff8a5c; --el:#7fb0ff; --flash:#ffd34d; --ok:#4cc38a; --amber:#e3a536;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+.wrap{max-width:1180px;margin:0 auto;padding:16px}
+h1{font-size:20px;margin:0 0 2px;font-weight:600}
+.sub{color:var(--muted);font-size:13px;margin:0 0 12px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+.card h3{font-size:13px;font-weight:600;color:var(--muted);margin:0 0 8px;text-transform:uppercase;letter-spacing:.04em}
+canvas{display:block;width:100%;height:auto}
+.grid{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:14px;margin-top:14px}
+@media (max-width:900px){.grid{grid-template-columns:1fr}}
+.btn{font:inherit;font-size:14px;padding:6px 12px;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer}
+.btn[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:8px 0}
+.steps{display:flex;flex-wrap:wrap;gap:6px}
+input[type=range]{width:100%;accent-color:var(--ink)}
+.legend{display:flex;flex-wrap:wrap;gap:6px 18px;font-size:13px;color:var(--muted);padding:6px 4px 0}
+.legend i{display:inline-block;vertical-align:-2px;margin-right:6px}
+.kv{display:grid;grid-template-columns:1fr auto;gap:4px 12px;font-size:14px}
+.kv b{font-variant-numeric:tabular-nums}
+.explain p{margin:0 0 8px;font-size:14.5px}
+.tag{display:inline-block;font-weight:600;padding:2px 10px;border-radius:999px;color:#fff;font-size:14px}
+svg text{font-family:inherit}
+.hint{font-size:12.5px;color:var(--muted)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>p-n-переход: дырки, электроны, запирающий слой</h1>
+  <p class="sub">Сначала пройди шаги 1 → 2, потом крути батарейку. Это то, что стоит внутри транзистора дважды: эмиттер|база и база|коллектор.</p>
+
+  <div class="card">
+    <div class="row steps">
+      <button class="btn" id="st1">1. Два куска отдельно</button>
+      <button class="btn" id="st2">2. Соединить</button>
+      <button class="btn" id="st3">3. Подключить батарейку</button>
+      <span style="flex:1"></span>
+      <label class="hint"><input type="checkbox" id="pause"> пауза</label>
+    </div>
+    <canvas id="cv" width="960" height="430"></canvas>
+    <div class="legend">
+      <span><i style="width:11px;height:11px;border:2px solid var(--hole);border-radius:50%"></i>дырка (+), свободная</span>
+      <span><i style="width:9px;height:9px;background:var(--el);border-radius:50%"></i>электрон (−), свободный</span>
+      <span><i style="width:11px;height:11px;border:1.5px solid var(--muted);border-radius:2px"></i>ион атома-примеси — сидит в кристалле, не двигается</span>
+      <span><i style="width:12px;height:12px;border:2px solid var(--flash);border-radius:50%"></i>вспышка — рекомбинация (дырка + электрон = оба пропали)</span>
+    </div>
+  </div>
+
+  <div class="grid">
+    <div class="card" id="ctrl">
+      <h3>Батарейка</h3>
+      <div class="row">
+        <button class="btn" id="flip">Перевернуть батарейку</button>
+        <span id="polTxt" style="font-size:14px"></span>
+      </div>
+      <div class="row" style="flex-wrap:nowrap"><span style="white-space:nowrap">U = </span><input type="range" id="u" min="0" max="10" step="0.01" value="0"><b id="uTxt" style="min-width:64px;text-align:right"></b></div>
+      <div class="row">
+        <span class="hint">быстро:</span>
+        <button class="btn" data-u="0">0 В</button>
+        <button class="btn" data-u="0.4" data-f="1">+0,4 В</button>
+        <button class="btn" data-u="0.7" data-f="1">+0,7 В (эмиттерный в лабе)</button>
+        <button class="btn" data-u="9" data-f="0">−9 В (коллекторный в лабе)</button>
+      </div>
+      <div class="row">
+        <button class="btn" id="inject">Впустить дырки со стороны n</button>
+        <span class="hint">так в транзисторе дырки прилетают к коллекторному переходу из тонкой базы</span>
+      </div>
+      <p class="hint">Последовательно с переходом стоит резистор 100 Ом — он ограничивает ток, как R1/R2 в лабе.</p>
+      <div class="kv" style="margin-top:10px">
+        <span>Напряжение на переходе</span><b id="kUd"></b>
+        <span>Ток через переход</span><b id="kI"></b>
+        <span>Высота барьера</span><b id="kBar"></b>
+        <span>Ширина запирающего слоя</span><b id="kW"></b>
+        <span>Состояние</span><span id="kSt"></span>
+      </div>
+      <svg id="iv" viewBox="0 0 420 220" style="width:100%;margin-top:10px"></svg>
+      <p class="hint">ВАХ перехода — как у диода в ЛР-5 и как входная ВАХ транзистора (табл. 3.1 и 3.3).</p>
+    </div>
+    <div class="card explain">
+      <h3>Что сейчас происходит</h3>
+      <div id="explain"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ---------- модель перехода (кремний): I = Is·(exp(Ud/(n·VT)) − 1), последовательно 100 Ом ----------
+const VT = 0.02585, NI = 1.2, IS = 1e-3 / Math.exp(0.65 / (NI * VT)), RS = 100, VBI = 0.7;
+const diodeI = ud => IS * (Math.exp(Math.min(ud / (NI * VT), 80)) - 1);
+function solveDiode(U) {               // U — со знаком: «+» = плюс батарейки на p
+  let lo = Math.min(U, 0) - 0.01, hi = Math.max(U, 0) + 0.01;
+  for (let i = 0; i < 100; i++) { const m = (lo + hi) / 2; (m + diodeI(m) * RS > U) ? hi = m : lo = m; }
+  const ud = (lo + hi) / 2; return {ud, i: diodeI(ud)};
+}
+
+// ---------- геометрия ----------
+const cv = document.getElementById('cv'), ctx = cv.getContext('2d');
+const W = 960, H = 430, L = 120, R = 840, J = 480, Y0 = 60, Y1 = 220, W0 = 56;
+const dpr = Math.min(2, window.devicePixelRatio || 1);
+cv.width = W * dpr; cv.height = H * dpr; ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+let C = {};
+function readColors() { const s = getComputedStyle(document.documentElement); for (const k of ['ink', 'muted', 'line', 'wire', 'p', 'n', 'zone', 'hole', 'el', 'flash', 'card', 'ok', 'amber']) C[k] = s.getPropertyValue('--' + k).trim(); }
+readColors(); matchMedia('(prefers-color-scheme: dark)').addEventListener('change', readColors);
+
+// ---------- состояние ----------
+const S = {step: 1, join: 0, fwd: true, u: 0, ud: 0, i: 0};
+let P = [], FL = [], WP = [], budget = 0, T = 0;
+const rnd = (a, b) => a + Math.random() * (b - a);
+function zoneW() {
+  if (S.step === 1) return 0;
+  const w = W0 * Math.sqrt(Math.max(0.004, (VBI + 0.05 - S.ud) / (VBI + 0.05)));
+  return S.step === 2 ? w * S.join : w;
+}
+const zl = () => J - zoneW() / 2, zr = () => J + zoneW() / 2;
+
+function seed() {
+  P = [];
+  for (let k = 0; k < 75; k++) P.push({t: 'h', home: 'p', x: rnd(L + 6, J - 8), y: rnd(Y0 + 6, Y1 - 6), vx: rnd(-40, 40), vy: rnd(-40, 40)});
+  for (let k = 0; k < 75; k++) P.push({t: 'e', home: 'n', x: rnd(J + 8, R - 6), y: rnd(Y0 + 6, Y1 - 6), vx: rnd(-40, 40), vy: rnd(-40, 40)});
+  FL = []; WP = []; budget = 0;
+}
+seed();
+
+function flash(x, y) { FL.push({x, y, t: 0}); }
+// электрон в проводе: side 'L' или 'R', toBat — движется к батарейке
+function wireDot(side, toBat) {
+  const xc = side === 'L' ? L - 12 : R + 12;
+  const path = [[xc, (Y0 + Y1) / 2], [xc, 380], [side === 'L' ? 440 : 520, 380]];
+  WP.push({path: toBat ? path : path.slice().reverse(), seg: 0, x: 0, y: 0, init: false});
+}
+
+function step(dt) {
+  T += dt;
+  if (S.step === 2 && S.join < 1) S.join = Math.min(1, S.join + dt / 2.5);
+  const a = zl(), b = zr(), fw = S.step === 3 ? S.ud : 0;
+  // сколько носителей в секунду перескакивает барьер — растёт с током (логарифмически, чтобы было видно и мкА, и мА)
+  const rate = S.step === 3 && S.i > 1e-7 ? Math.min(34, 7 * Math.log10(1 + S.i / 1e-6)) : 0;
+  budget = Math.min(6, budget + rate * dt);
+  const drift = S.step === 3 ? (fw > 0 ? 25 * Math.min(1, fw / 0.7) : -18) : 0;   // батарейка тянет к переходу (прямое) или от него (обратное)
+
+  for (const p of P) {
+    p.vx += rnd(-1, 1) * 260 * dt; p.vy += rnd(-1, 1) * 260 * dt;
+    p.vx *= 0.97; p.vy *= 0.97;
+    const sp = Math.hypot(p.vx, p.vy); if (sp > 70) { p.vx *= 70 / sp; p.vy *= 70 / sp; }
+    let dx = p.vx;
+    if (!p.minor) dx += (p.t === 'h' ? 1 : -1) * drift;
+    if (p.cross) dx = (p.t === 'h' ? 1 : -1) * 160;
+    if (p.sweep) dx = (p.t === 'h' ? -1 : 1) * 260;
+    p.x += dx * dt; p.y += p.vy * dt;
+    if (p.y < Y0 + 5) { p.y = Y0 + 5; p.vy = Math.abs(p.vy); }
+    if (p.y > Y1 - 5) { p.y = Y1 - 5; p.vy = -Math.abs(p.vy); }
+
+    if (S.step === 1) {                                       // куски не соединены: щель посередине
+      if (p.t === 'h' && p.x > J - 8) { p.x = J - 8; p.vx = -Math.abs(p.vx); }
+      if (p.t === 'e' && p.x < J + 8) { p.x = J + 8; p.vx = Math.abs(p.vx); }
+    } else if (S.step === 2) {                                // образование слоя: всё, что попало в слой, рекомбинирует
+      if (p.x > a && p.x < b && !p.minor) { p.dead = true; flash(p.x, p.y); }
+      if (p.t === 'h' && p.x > b) { p.x = a - 1; p.vx = -Math.abs(p.vx); }
+      if (p.t === 'e' && p.x < a) { p.x = b + 1; p.vx = Math.abs(p.vx); }
+    } else {
+      if (p.t === 'h' && !p.minor && !p.cross && p.x > a) {    // дырка из p упёрлась в слой
+        if (budget >= 1) { budget -= 1; p.cross = true; }
+        else { p.x = a - 0.5; p.vx = -Math.abs(p.vx) - 20; }
+      }
+      if (p.t === 'e' && !p.minor && !p.cross && p.x < b) {    // электрон из n упёрся в слой
+        if (budget >= 1) { budget -= 1; p.cross = true; }
+        else { p.x = b + 0.5; p.vx = Math.abs(p.vx) + 20; }
+      }
+      if (p.cross && ((p.t === 'h' && p.x > b + 4) || (p.t === 'e' && p.x < a - 4))) {
+        p.cross = false; p.minor = true; p.life = rnd(0.25, 0.8);     // перелетел — теперь «чужой» в той области
+      }
+      if (p.minor && !p.cross && !p.sweep) {
+        p.life -= dt;
+        // чужой носитель подошёл к слою с «чужой» стороны, а барьера для него нет — поле затягивает обратно на свою сторону
+        if (fw < 0.45 && ((p.t === 'h' && p.home === 'n' && p.x < b + 2) || (p.t === 'e' && p.home === 'p' && p.x > a - 2))) p.sweep = true;
+        else if (p.life <= 0) recombine(p);
+      }
+      if (p.sweep && ((p.t === 'h' && p.x < a - 4) || (p.t === 'e' && p.x > b + 4))) {
+        p.sweep = false; p.minor = false; p.home = p.t === 'h' ? 'p' : 'n';
+        // в своей области стало на один носитель больше — лишний уходит в провод
+        const extra = P.find(q => q.t === p.t && !q.minor && !q.dead && q !== p && (p.t === 'h' ? q.x < L + 60 : q.x > R - 60));
+        if (extra) { extra.dead = true; wireDot(p.t === 'h' ? 'L' : 'R', p.t === 'e'); }
+      }
+    }
+    // граница кристалла и контакты
+    if (p.x < L + 4) { if (p.t === 'e' && p.minor) p.x = L + 4; else { p.x = L + 4; p.vx = Math.abs(p.vx); } }
+    if (p.x > R - 4) { p.x = R - 4; p.vx = -Math.abs(p.vx); }
+  }
+  P = P.filter(p => !p.dead);
+  for (const f of FL) f.t += dt; FL = FL.filter(f => f.t < 0.6);
+  for (const w of WP) {
+    if (!w.init) { [w.x, w.y] = w.path[0]; w.init = true; }
+    const [tx, ty] = w.path[w.seg + 1], dx = tx - w.x, dy = ty - w.y, l = Math.hypot(dx, dy), s = 220 * dt;
+    if (l <= s) { w.x = tx; w.y = ty; w.seg++; if (w.seg >= w.path.length - 1) w.dead = true; } else { w.x += dx / l * s; w.y += dy / l * s; }
+  }
+  WP = WP.filter(w => !w.dead);
+}
+
+// перелетевший носитель встречает «хозяина» области и оба пропадают; батарейка подаёт новых через контакты
+function recombine(p) {
+  let best = null, bd = 1e9;
+  for (const q of P) if (!q.dead && !q.minor && q.t !== p.t) { const d = Math.hypot(q.x - p.x, q.y - p.y); if (d < bd) { bd = d; best = q; } }
+  p.dead = true;
+  if (!best) return;
+  best.dead = true; flash((p.x + best.x) / 2, (p.y + best.y) / 2);
+  // новая дырка входит в p слева (электрон ушёл из p в провод), новый электрон приходит в n справа из провода
+  P.push({t: 'h', home: 'p', x: L + 6, y: rnd(Y0 + 8, Y1 - 8), vx: 30, vy: rnd(-30, 30)});
+  P.push({t: 'e', home: 'n', x: R - 6, y: rnd(Y0 + 8, Y1 - 8), vx: -30, vy: rnd(-30, 30)});
+  wireDot('L', true); wireDot('R', false);
+}
+
+// ---------- рисование ----------
+function txt(s, x, y, o = {}) { ctx.fillStyle = o.c || C.ink; ctx.font = `${o.w || 500} ${o.s || 13}px system-ui, sans-serif`; ctx.textAlign = o.a || 'center'; ctx.textBaseline = 'middle'; ctx.fillText(s, x, y); }
+function draw() {
+  ctx.clearRect(0, 0, W, H);
+  const a = zl(), b = zr(), gap = S.step === 1 ? 8 : 0;
+  // области
+  ctx.fillStyle = C.p; ctx.fillRect(L, Y0, J - L - gap, Y1 - Y0);
+  ctx.fillStyle = C.n; ctx.fillRect(J + gap, Y0, R - J - gap, Y1 - Y0);
+  if (S.step > 1) { ctx.fillStyle = C.zone; ctx.fillRect(a, Y0, b - a, Y1 - Y0); }
+  ctx.strokeStyle = C.ink; ctx.lineWidth = 1.5;
+  ctx.strokeRect(L, Y0, J - L - gap, Y1 - Y0); ctx.strokeRect(J + gap, Y0, R - J - gap, Y1 - Y0);
+  // ионы примеси: везде, но «голые» видны только в слое
+  for (let x = L + 12; x < R - 6; x += 18) for (let y = Y0 + 14; y < Y1 - 6; y += 22) {
+    const inZone = S.step > 1 && x > a && x < b, onP = x < J;
+    ctx.globalAlpha = inZone ? 0.95 : 0.13;
+    ctx.strokeStyle = inZone ? C.ink : C.muted; ctx.lineWidth = 1.2; ctx.strokeRect(x - 5, y - 5, 10, 10);
+    txt(onP ? '−' : '+', x, y + 0.5, {s: 11, w: 700, c: inZone ? C.ink : C.muted});
+    ctx.globalAlpha = 1;
+  }
+  if (S.step > 1 && b - a > 12) {
+    ctx.setLineDash([4, 4]); ctx.strokeStyle = C.muted; ctx.lineWidth = 1;
+    for (const x of [a, b]) { ctx.beginPath(); ctx.moveTo(x, Y0 - 6); ctx.lineTo(x, Y1 + 6); ctx.stroke(); }
+    ctx.setLineDash([]);
+    // поле слоя: от «+» ионов к «−»
+    ctx.strokeStyle = C.amber; ctx.fillStyle = C.amber; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(b - 4, Y0 - 14); ctx.lineTo(a + 8, Y0 - 14); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(a + 2, Y0 - 14); ctx.lineTo(a + 10, Y0 - 19); ctx.lineTo(a + 10, Y0 - 9); ctx.fill();
+    txt('поле слоя', J, Y0 - 28, {s: 11, c: C.amber});
+  }
+  // носители
+  for (const p of P) {
+    if (p.t === 'h') { ctx.strokeStyle = C.hole; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(p.x, p.y, 4.3, 0, 6.283); ctx.stroke(); }
+    else { ctx.fillStyle = C.el; ctx.beginPath(); ctx.arc(p.x, p.y, 3.4, 0, 6.283); ctx.fill(); }
+  }
+  for (const f of FL) { ctx.globalAlpha = 1 - f.t / 0.6; ctx.strokeStyle = C.flash; ctx.lineWidth = 2.2; ctx.beginPath(); ctx.arc(f.x, f.y, 5 + f.t * 26, 0, 6.283); ctx.stroke(); ctx.globalAlpha = 1; }
+  // подписи
+  txt('p — «дырочный»: свободных дырок много', (L + J) / 2, Y1 + 16, {w: 600});
+  txt('n — «электронный»: свободных электронов много', (J + R) / 2, Y1 + 16, {w: 600});
+  if (S.step > 1 && b - a > 30) txt('запирающий слой', J, Y1 + 34, {s: 12, c: C.muted});
+
+  // барьер-«горка»
+  if (S.step > 1) {
+    const hb = Math.min(70, 40 * Math.max(0.04, VBI - (S.step === 3 ? S.ud : 0)) / VBI), yb = 300;
+    ctx.strokeStyle = C.ink; ctx.lineWidth = 2; ctx.beginPath();
+    ctx.moveTo(300, yb); ctx.lineTo(a, yb); ctx.bezierCurveTo(J, yb, J, yb - hb, b, yb - hb); ctx.lineTo(660, yb - hb); ctx.stroke();
+    txt('барьер для дырок: из p в n надо «забраться» на ' + fmt(Math.max(0, VBI - (S.step === 3 ? S.ud : 0)), 2) + ' В', J, yb + 16, {s: 12, c: C.muted});
+  }
+  // батарейка и провода
+  if (S.step === 3) {
+    ctx.strokeStyle = C.wire; ctx.lineWidth = 2;
+    ctx.fillStyle = C.wire; ctx.fillRect(L - 10, Y0, 8, Y1 - Y0); ctx.fillRect(R + 2, Y0, 8, Y1 - Y0);
+    ctx.beginPath(); ctx.moveTo(L - 12, (Y0 + Y1) / 2); ctx.lineTo(L - 12, 380); ctx.lineTo(462, 380);
+    ctx.moveTo(R + 12, (Y0 + Y1) / 2); ctx.lineTo(R + 12, 380); ctx.lineTo(498, 380); ctx.stroke();
+    // элемент: длинная черта = «+»
+    const plusLeft = S.fwd, xl = 470, xr = 490;
+    ctx.lineWidth = plusLeft ? 2.5 : 6; ctx.beginPath(); ctx.moveTo(xl, 380 - (plusLeft ? 18 : 9)); ctx.lineTo(xl, 380 + (plusLeft ? 18 : 9)); ctx.stroke();
+    ctx.lineWidth = plusLeft ? 6 : 2.5; ctx.beginPath(); ctx.moveTo(xr, 380 - (plusLeft ? 9 : 18)); ctx.lineTo(xr, 380 + (plusLeft ? 9 : 18)); ctx.stroke();
+    ctx.beginPath(); ctx.lineWidth = 2; ctx.moveTo(462, 380); ctx.lineTo(xl, 380); ctx.moveTo(xr, 380); ctx.lineTo(498, 380); ctx.stroke();
+    txt(plusLeft ? '+' : '−', xl - 2, 352, {s: 18, w: 700}); txt(plusLeft ? '−' : '+', xr + 2, 352, {s: 18, w: 700});
+    txt(fmt(S.u, 2) + ' В', 480, 410, {w: 600});
+    ctx.strokeStyle = C.wire; ctx.strokeRect(600, 372, 60, 16); txt('100 Ом', 630, 400, {s: 11, c: C.muted});
+    for (const w of WP) { ctx.fillStyle = C.el; ctx.beginPath(); ctx.arc(w.x, w.y, 3.4, 0, 6.283); ctx.fill(); }
+    txt('провод: здесь ток несут электроны', 250, 396, {s: 11, c: C.muted});
+  }
+}
+
+// ---------- текст и цифры ----------
+const fmt = (v, d) => v.toFixed(d).replace('.', ',').replace('-', '−');
+function fI(a) { const v = Math.abs(a); if (v >= 1e-3) return fmt(a * 1e3, 2) + ' мА'; if (v >= 1e-6) return fmt(a * 1e6, 2) + ' мкА'; if (v >= 1e-9) return fmt(a * 1e9, 2) + ' нА'; return fmt(a * 1e12, 2) + ' пА'; }
+
+function explain() {
+  const e = [];
+  if (S.step === 1) {
+    e.push('<b>Два куска кремния, ещё не соединены.</b>');
+    e.push('Слева <b>p-тип</b>: в кремний добавили атомы, которым не хватает одного электрона. На месте каждого недостающего электрона — <b>дырка</b>, и ведёт она себя как свободный «+». Справа <b>n-тип</b>: добавили атомы с лишним электроном, и эти лишние электроны бегают свободно.');
+    e.push('Квадратики с «−» и «+» — сами атомы-примеси. Они встроены в кристалл и <b>никуда не двигаются</b>. В p атом, который «взял» электрон, стал «−», в n атом, который «отдал» электрон, стал «+». Каждый кусок в целом нейтрален: сколько свободных «+», столько неподвижных «−», и наоборот.');
+    e.push('Носители всё время беспорядочно мечутся — это тепловое движение. Нажми «2. Соединить».');
+  } else if (S.step === 2 && S.join < 1) {
+    e.push('<b>Соединили.</b> Дырки слева и электроны справа беспорядочно мечутся и залетают за границу. Дырка встречает электрон, электрон «падает» в дырку — и оба пропадают. Это <b>рекомбинация</b> (жёлтые вспышки).');
+  } else if (S.step === 2) {
+    e.push('<b>Получился запирающий слой</b> (обеднённый слой, depletion layer) — белая полоса. Свободных носителей в нём <b>нет</b>, они там рекомбинировали.');
+    e.push('Но неподвижные ионы остались, и теперь они «голые»: со стороны p — «−», со стороны n — «+». Раньше их заряд прикрывали свободные носители, а теперь прикрывать нечем.');
+    e.push('Эти голые заряды создают <b>поле</b> (жёлтая стрелка). Поле направлено от «+» к «−», то есть справа налево. Дырку (+) оно толкает влево — обратно в p, электрон (−) толкает вправо — обратно в n. Посмотри: носители подлетают к слою и отскакивают. Поэтому слой перестаёт расти — получилось равновесие.');
+    e.push('Это и есть <b>барьер</b> (горка внизу): чтобы дырке перейти из p в n, ей надо «забраться» примерно на 0,7 В. Сама она не может. Нажми «3. Подключить батарейку».');
+  } else {
+    const ud = S.ud;
+    e.push(S.fwd ? '<b>Плюс батарейки — на p, минус — на n.</b> Это <b>прямое включение</b> (forward bias).' : '<b>Плюс батарейки — на n, минус — на p.</b> Это <b>обратное включение</b> (reverse bias).');
+    if (S.u < 0.005) e.push('Батарейка на 0 В — то же, что шаг 2: слой и барьер на месте, тока нет.');
+    else if (S.fwd && ud < 0.45) e.push(`Плюс давит дырки к границе, минус давит туда же электроны. Слой стал уже, горка ниже — ${fmt(VBI - ud, 2)} В вместо 0,7. Но через барьер перебираются ещё единицы: ток всего ${fI(S.i)}. Это нижний пологий участок ВАХ — как 0,50–0,60 В в табл. 3.1, где ток базы микроамперный.`);
+    else if (S.fwd) e.push(`Горка почти срыта (${fmt(Math.max(0, VBI - ud), 2)} В), слой стал тонким. Дырки толпой идут в n, электроны в p, там встречают «хозяев» и рекомбинируют (вспышки). Батарейка тут же подаёт новых: через правый провод в n приходят электроны, а из p электроны уходят в левый провод — так в p появляются новые дырки. Это и есть ток: <b>${fI(S.i)}</b>. Переход <b>открыт</b>.`);
+    else e.push(`Минус на p оттягивает дырки влево, плюс на n оттягивает электроны вправо. Слой стал <b>шире</b>, горка выше — ${fmt(VBI - ud, 1)} В. Через такой барьер своим носителям не перебраться: ток ${fI(S.i)} — практически ноль. Переход <b>закрыт</b>.`);
+    if (S.fwd && ud > 0.6) e.push('В транзисторе так работает <b>эмиттерный переход</b> (Э–Б): на нём 0,68–0,72 В, и дырки из эмиттера (p) летят в базу (n). Только база очень тонкая, и большинство дырок не успевает рекомбинировать — их подхватывает коллектор.');
+    if (!S.fwd && S.u > 1) e.push('Так в транзисторе стоит <b>коллекторный переход</b> (К–Б): −9 В, закрыт. Нажми «Впустить дырки со стороны n»: для «чужих» дырок, попавших в n, барьера нет, наоборот — поле слоя <b>затягивает</b> их в p. Именно так коллектор собирает дырки, пролетевшие тонкую базу.');
+    if (S.injected && (S.fwd || S.u < 0.5)) e.push('Впущенные дырки в n просто бродят и рекомбинируют с электронами: поле слоя затягивает их только при обратном включении. Поставь «−9 В» и впусти ещё раз.');
+  }
+  document.getElementById('explain').innerHTML = e.map(s => `<p>${s}</p>`).join('');
+}
+
+function ivPlot() {
+  const svg = document.getElementById('iv'), Wd = 420, Ht = 220, l = 48, r = 12, t = 10, bt = 32;
+  const x0 = -1, x1 = 0.85, y0 = -2, y1 = 25;
+  const sx = x => l + (x - x0) / (x1 - x0) * (Wd - l - r), sy = y => Ht - bt - (y - y0) / (y1 - y0) * (Ht - t - bt);
+  let s = '';
+  for (let x = -1; x <= 0.81; x += 0.2) s += `<line x1="${sx(x)}" x2="${sx(x)}" y1="${t}" y2="${Ht - bt}" stroke="var(--line)"/><text x="${sx(x)}" y="${Ht - bt + 14}" font-size="11" fill="var(--muted)" text-anchor="middle">${fmt(x, 1)}</text>`;
+  for (let y = 0; y <= 25; y += 5) s += `<line x1="${l}" x2="${Wd - r}" y1="${sy(y)}" y2="${sy(y)}" stroke="var(--line)"/><text x="${l - 6}" y="${sy(y) + 4}" font-size="11" fill="var(--muted)" text-anchor="end">${y}</text>`;
+  s += `<line x1="${sx(0)}" x2="${sx(0)}" y1="${t}" y2="${Ht - bt}" stroke="var(--muted)"/><line x1="${l}" x2="${Wd - r}" y1="${sy(0)}" y2="${sy(0)}" stroke="var(--muted)"/>`;
+  const pts = []; for (let u = x0; u <= x1; u += 0.01) { const i = diodeI(u) * 1e3; if (i > y1 * 1.2) break; pts.push(`${sx(u).toFixed(1)},${sy(i).toFixed(1)}`); }
+  s += `<polyline points="${pts.join(' ')}" fill="none" stroke="var(--ink)" stroke-width="2"/>`;
+  s += `<text x="${(l + Wd - r) / 2}" y="${Ht - 4}" font-size="11" fill="var(--muted)" text-anchor="middle">U на переходе, В (минус — обратное)</text>`;
+  s += `<text x="12" y="${(t + Ht - bt) / 2}" font-size="11" fill="var(--muted)" text-anchor="middle" transform="rotate(-90 12 ${(t + Ht - bt) / 2})">I, мА</text>`;
+  if (S.step === 3) {
+    const ux = S.ud, iy = S.i * 1e3, inside = ux >= x0 && ux <= x1 && iy <= y1;
+    s += `<circle cx="${Math.max(l, Math.min(Wd - r, sx(ux)))}" cy="${Math.max(t, sy(Math.min(iy, y1)))}" r="6" fill="${inside ? 'var(--hole)' : 'none'}" stroke="var(--hole)" stroke-width="2.5"/>`;
+    if (ux < x0) s += `<text x="${l + 6}" y="${sy(0) - 10}" font-size="11" fill="var(--hole)">← точка при ${fmt(ux, 1)} В</text>`;
+  }
+  svg.innerHTML = s;
+}
+
+function update() {
+  const U = S.fwd ? S.u : -S.u, r = solveDiode(U);
+  S.ud = r.ud; S.i = r.i;
+  document.getElementById('uTxt').textContent = fmt(S.u, 2) + ' В';
+  document.getElementById('polTxt').innerHTML = S.fwd ? '«+» на p, «−» на n — <b>прямое</b>' : '«+» на n, «−» на p — <b>обратное</b>';
+  const on = S.step === 3;
+  document.getElementById('ctrl').style.opacity = on ? 1 : 0.45;
+  document.getElementById('kUd').textContent = on ? fmt(S.fwd ? S.ud : S.ud, 3) + ' В' : '—';
+  document.getElementById('kI').textContent = on ? fI(S.i) : '0';
+  document.getElementById('kBar').textContent = S.step === 1 ? 'нет' : fmt(Math.max(0, VBI - (on ? S.ud : 0)), 2) + ' В';
+  document.getElementById('kW').textContent = S.step === 1 ? 'слоя нет' : Math.round(zoneW() / W0 * 100) + ' % от «без батарейки»';
+  let st = ['нет перехода', 'var(--muted)'];
+  if (S.step === 2) st = ['закрыт сам по себе', 'var(--muted)'];
+  if (on) st = S.ud > 0.6 ? ['открыт', 'var(--ok)'] : S.ud > 0.45 ? ['приоткрыт', 'var(--amber)'] : ['закрыт', 'var(--muted)'];
+  document.getElementById('kSt').innerHTML = `<span class="tag" style="background:${st[1]}">${st[0]}</span>`;
+  ['st1', 'st2', 'st3'].forEach((id, k) => document.getElementById(id).setAttribute('aria-pressed', S.step === k + 1));
+  explain(); ivPlot();
+}
+
+document.getElementById('st1').onclick = () => { S.step = 1; S.join = 0; S.injected = false; seed(); update(); };
+document.getElementById('st2').onclick = () => { if (S.step === 1) { S.step = 2; S.join = 0; } else { S.step = 2; S.join = 1; } update(); };
+document.getElementById('st3').onclick = () => { if (S.step === 1) { S.step = 2; S.join = 1; } S.step = 3; S.join = 1; update(); };
+document.getElementById('u').oninput = e => { S.u = +e.target.value; if (S.step < 3) { S.step = 3; S.join = 1; } update(); };
+document.getElementById('flip').onclick = () => { S.fwd = !S.fwd; if (S.step < 3) { S.step = 3; S.join = 1; } update(); };
+document.querySelectorAll('[data-u]').forEach(bn => bn.onclick = () => {
+  S.u = +bn.dataset.u; if (bn.dataset.f) S.fwd = bn.dataset.f === '1';
+  document.getElementById('u').value = S.u; S.step = 3; S.join = 1; update();
+});
+document.getElementById('inject').onclick = () => {
+  if (S.step < 3) { S.step = 3; S.join = 1; }
+  for (let k = 0; k < 14; k++) P.push({t: 'h', home: 'n', minor: true, life: rnd(1.2, 2.2), x: zr() + rnd(6, 60), y: rnd(Y0 + 8, Y1 - 8), vx: rnd(-30, 30), vy: rnd(-30, 30)});
+  S.injected = true; update();
+};
+
+let last = null, tick = 0;
+function loop(now) {
+  if (last === null) last = now;
+  const dt = Math.max(0, Math.min(0.05, (now - last) / 1000)); last = now;   // dt не бывает отрицательным
+  if (!document.getElementById('pause').checked) step(dt);
+  draw();
+  if (S.step === 2 && S.join < 1 && ++tick % 10 === 0) update();
+  if (S.step === 2 && S.join >= 1 && tick >= 0) { tick = -1; update(); }
+  requestAnimationFrame(loop);
+}
+update(); requestAnimationFrame(loop);
+</script>
+</body>
+</html>

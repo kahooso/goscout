@@ -1,0 +1,585 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Дырки и электроны в p-n-p</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: сверху структура транзистора (canvas) с тремя выводами, под ней пульт подключений, ниже — блок «что происходит» */
+:root {
+  --paper: #F2F5F8;
+  --panel: #FFFFFF;
+  --ink: #15202B;
+  --ink-2: #4B5A6A;
+  --line: #D6DEE7;
+  --wire: #7D8A98;
+  --reg-pp: #F6D3C2;
+  --reg-p: #FBE6DB;
+  --reg-n: #D8E6FA;
+  --dep: #FFFFFF;
+  --dep-line: #9AA7B5;
+  --hole: #D4461A;
+  --elec: #2462D6;
+  --flash: #E8A400;
+  --cur: #15202B;
+  --m-active: #1E8A5A;
+  --m-cut: #6B7785;
+  --m-sat: #B26B0E;
+  --m-inv: #7A4CC2;
+  --chip: #E6ECF3;
+  --f-body: "Golos Text", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --f-mono: "JetBrains Mono", ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #0E1318; --panel: #151C24; --ink: #E3E9EF; --ink-2: #9BA9B8; --line: #26313D;
+    --wire: #6E7C8B; --reg-pp: #4A2A1E; --reg-p: #36231C; --reg-n: #1B2D45; --dep: #0E1318; --dep-line: #5A6877;
+    --hole: #FF8A5C; --elec: #7FB0FF; --flash: #FFD34D; --cur: #E3E9EF; --chip: #1E2731;
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #0E1318; --panel: #151C24; --ink: #E3E9EF; --ink-2: #9BA9B8; --line: #26313D;
+  --wire: #6E7C8B; --reg-pp: #4A2A1E; --reg-p: #36231C; --reg-n: #1B2D45; --dep: #0E1318; --dep-line: #5A6877;
+  --hole: #FF8A5C; --elec: #7FB0FF; --flash: #FFD34D; --cur: #E3E9EF; --chip: #1E2731;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--paper); color: var(--ink); font: 15px/1.5 var(--f-body); }
+main { max-width: 1080px; margin: 0 auto; padding: 20px 16px 40px; }
+h1 { font-size: 22px; font-weight: 600; margin: 0 0 4px; }
+.sub { color: var(--ink-2); margin: 0 0 16px; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; }
+.stage { padding: 8px; }
+canvas { display: block; width: 100%; height: auto; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 18px; padding: 6px 10px 2px; color: var(--ink-2); font-size: 13px; }
+.legend i { display: inline-block; vertical-align: -2px; margin-right: 6px; }
+.lg-h { width: 12px; height: 12px; border: 2px solid var(--hole); border-radius: 50%; }
+.lg-e { width: 9px; height: 9px; background: var(--elec); border-radius: 50%; }
+.lg-m { width: 9px; height: 9px; border: 1.5px solid var(--ink-2); border-radius: 50%; opacity: .5; }
+.lg-c { width: 18px; height: 0; border-top: 2px solid var(--cur); position: relative; }
+.grid { display: grid; gap: 12px; margin-top: 12px; grid-template-columns: repeat(3, 1fr); }
+.grid2 { display: grid; gap: 12px; margin-top: 12px; grid-template-columns: 1fr 1fr; }
+@media (max-width: 760px) { .grid, .grid2 { grid-template-columns: 1fr; } }
+h3 { margin: 0 0 8px; font-size: 15px; font-weight: 600; }
+h3 .big { display: inline-grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; background: var(--chip); margin-right: 8px; }
+select, button { font: inherit; color: var(--ink); background: var(--paper); border: 1px solid var(--line); border-radius: 8px; padding: 6px 8px; }
+select { width: 100%; }
+button { cursor: pointer; }
+button:hover { border-color: var(--ink-2); }
+.phi { font-family: var(--f-mono); font-size: 13px; color: var(--ink-2); margin-top: 6px; }
+.row { display: grid; grid-template-columns: 70px 1fr 74px; gap: 8px; align-items: center; margin: 6px 0; }
+.row output { font-family: var(--f-mono); font-size: 13px; text-align: right; }
+input[type=range] { width: 100%; }
+.presets { display: flex; flex-wrap: wrap; gap: 6px; }
+.note { color: var(--ink-2); font-size: 13px; margin: 8px 0 0; }
+.mode { display: inline-block; padding: 3px 10px; border-radius: 999px; color: #fff; font-weight: 600; font-size: 14px; margin-left: 8px; }
+table { width: 100%; border-collapse: collapse; font-size: 14px; }
+td, th { padding: 5px 6px; border-bottom: 1px solid var(--line); text-align: left; }
+th { color: var(--ink-2); font-weight: 500; }
+td.num { font-family: var(--f-mono); white-space: nowrap; }
+ol { margin: 6px 0 0; padding-left: 22px; }
+ol li { margin: 4px 0; }
+.status-head { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
+label.chk { display: flex; gap: 8px; align-items: center; margin-top: 10px; font-size: 14px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Дырки и электроны в транзисторе p-n-p</h1>
+  <p class="sub">2N1132A из лабы 6. Выберите, к чему подключён каждый вывод: структура, переходы и потоки носителей пересчитываются сразу.</p>
+
+  <section class="card stage">
+    <canvas id="cv" width="960" height="420" aria-label="Структура p-n-p транзистора с потоками носителей"></canvas>
+    <div class="legend">
+      <span><i class="lg-h"></i>дырка (+), движется по направлению тока</span>
+      <span><i class="lg-e"></i>электрон (−), движется против тока</span>
+      <span><i class="lg-m"></i>основные носители области (фон)</span>
+      <span><i class="lg-c"></i>стрелка на проводе — условный ток I</span>
+    </div>
+  </section>
+
+  <div class="grid">
+    <section class="card"><h3><span class="big">Э</span>Эмиттер</h3><select id="selE"></select><div class="phi" id="phiE"></div></section>
+    <section class="card"><h3><span class="big">Б</span>База</h3><select id="selB"></select><div class="phi" id="phiB"></div></section>
+    <section class="card"><h3><span class="big">К</span>Коллектор</h3><select id="selC"></select><div class="phi" id="phiC"></div></section>
+  </div>
+
+  <div class="grid2">
+    <section class="card">
+      <h3>Источники</h3>
+      <div class="row"><span>U1</span><input id="u1" type="range" min="0" max="1.5" step="0.01" value="0.8"><output id="u1o"></output></div>
+      <div class="row"><span>U2</span><input id="u2" type="range" min="0" max="15" step="0.1" value="15"><output id="u2o"></output></div>
+      <div class="row"><span>R<sub>V1</sub></span><select id="r1"><option value="100">100 Ом</option><option value="1000" selected>1 кОм</option><option value="10000">10 кОм</option></select><span></span></div>
+      <div class="row"><span>R<sub>V2</sub></span><select id="r2"><option value="100">100 Ом</option><option value="1000" selected>1 кОм</option><option value="10000">10 кОм</option></select><span></span></div>
+      <p class="note">Второй вывод каждого источника соединён с землёй. Последовательно с V1 стоит R<sub>V1</sub>, с V2 — R<sub>V2</sub>: они ограничивают ток, как делитель и нагрузка на стенде.</p>
+    </section>
+    <section class="card">
+      <h3>Готовые подключения</h3>
+      <div class="presets">
+        <button data-p="ce">ОЭ, активный (как в лабе)</button>
+        <button data-p="cb">ОБ, активный</button>
+        <button data-p="sat">Насыщение</button>
+        <button data-p="cut">Отсечка</button>
+        <button data-p="inv">Инверсный</button>
+        <button data-p="open">База оборвана</button>
+      </div>
+      <label class="chk"><input type="checkbox" id="exag"> Наглядно: рекомбинация в базе ×10 (только анимация, числа не меняются)</label>
+      <label class="chk"><input type="checkbox" id="pause"> Пауза анимации</label>
+    </section>
+  </div>
+
+  <section class="card" style="margin-top:12px">
+    <div class="status-head"><h3 style="margin:0">Что происходит сейчас</h3><span class="mode" id="mode"></span></div>
+    <table>
+      <thead><tr><th>Переход</th><th>Напряжение p − n</th><th>Смещение</th><th>Обеднённый слой</th></tr></thead>
+      <tbody id="junc"></tbody>
+    </table>
+    <table style="margin-top:10px">
+      <thead><tr><th>Вывод</th><th>Потенциал</th><th>Ток</th><th>Электроны в проводе</th></tr></thead>
+      <tbody id="curr"></tbody>
+    </table>
+    <ol id="steps"></ol>
+    <p class="note">Модель упрощена: уравнения Эберса–Молла, параметры подогнаны под замеры лабы (вход ОБ, α ≈ 0,99 при 15 В), эффект Эрли учтён через α. Не показаны электроны, которые база инжектирует в эмиттер, и тепловая генерация пар. Интенсивность потоков растёт как логарифм тока, а соотношения потоков внутри транзистора соответствуют расчёту.</p>
+  </section>
+</main>
+
+<script id="model">
+// Модель p-n-p по Эберсу–Моллу. Токи считаются втекающими в вывод.
+const Vt = 0.02585, nE = 1.38, NVT = nE * Vt;
+const IES = 2.74e-3 / Math.exp(0.6505 / NVT);
+const AF0 = 0.986, AR = 0.5, ICS = AF0 * IES / AR;
+const GMIN = 1e-12;
+
+function lexp(x) { return x < 40 ? Math.exp(x) : Math.exp(40) * (1 + (x - 40)); }
+function dlexp(x) { return x < 40 ? Math.exp(x) : Math.exp(40); }
+function alphaF(vCB) { return 1 - 0.014 / (1 + Math.max(0, -vCB) / 43); }
+
+function deviceCurrents(V) {
+  const vEB = V[0] - V[1], vCB = V[2] - V[1];
+  const aF = alphaF(vCB);
+  const IF = IES * (lexp(vEB / NVT) - 1), gF = IES * dlexp(vEB / NVT) / NVT;
+  const IR = ICS * (lexp(vCB / NVT) - 1), gR = ICS * dlexp(vCB / NVT) / NVT;
+  const iE = IF - AR * IR, iC = IR - aF * IF, iB = -(iE + iC);
+  const dE = [gF, -gF + AR * gR, -AR * gR];
+  const dC = [-aF * gF, -gR + aF * gF, gR];
+  const dB = [-(dE[0] + dC[0]), -(dE[1] + dC[1]), -(dE[2] + dC[2])];
+  return { vEB, vCB, aF, IF, IR, i: [iE + GMIN * V[0], iB + GMIN * V[1], iC + GMIN * V[2]], J: [dE, dB, dC] };
+}
+
+function solve3(A, b) {
+  const M = A.map((r, k) => [...r, b[k]]);
+  for (let c = 0; c < 3; c++) {
+    let p = c;
+    for (let r = c + 1; r < 3; r++) if (Math.abs(M[r][c]) > Math.abs(M[p][c])) p = r;
+    [M[c], M[p]] = [M[p], M[c]];
+    for (let r = c + 1; r < 3; r++) {
+      const f = M[r][c] / M[c][c];
+      for (let k = c; k < 4; k++) M[r][k] -= f * M[c][k];
+    }
+  }
+  const x = [0, 0, 0];
+  for (let r = 2; r >= 0; r--) {
+    let s = M[r][3];
+    for (let k = r + 1; k < 3; k++) s -= M[r][k] * x[k];
+    x[r] = s / M[r][r];
+  }
+  return x;
+}
+
+// conns[t] = {S, G} или null (вывод не подключён); t: 0 = Э, 1 = Б, 2 = К
+function newton(conns, V0, scale) {
+  const V = V0.slice();
+  for (let it = 0; it < 600; it++) {
+    const d = deviceCurrents(V);
+    const r = [0, 0, 0], J = [[0, 0, 0], [0, 0, 0], [0, 0, 0]];
+    for (let t = 0; t < 3; t++) {
+      const c = conns[t];
+      r[t] = (c ? c.G * (c.S * scale - V[t]) : 0) - d.i[t];
+      for (let k = 0; k < 3; k++) J[t][k] = -d.J[t][k] - (t === k ? GMIN : 0);
+      if (c) J[t][t] -= c.G;
+    }
+    const dx = solve3(J, r.map(v => -v));
+    let m = 0;
+    for (let t = 0; t < 3; t++) {
+      if (!isFinite(dx[t])) return null;
+      const s = Math.max(-0.25, Math.min(0.25, dx[t]));
+      V[t] += s; m = Math.max(m, Math.abs(s));
+    }
+    if (m < 1e-11) return V;
+  }
+  return V;
+}
+
+function solveCircuit(conns, warm) {
+  let V = warm ? newton(conns, warm, 1) : null;
+  if (V && residualOk(conns, V)) return V;
+  V = [0, 0, 0];
+  for (let s = 1; s <= 20; s++) { V = newton(conns, V, s / 20) || [0, 0, 0]; }
+  return V;
+}
+
+function residualOk(conns, V) {
+  const d = deviceCurrents(V);
+  for (let t = 0; t < 3; t++) {
+    const c = conns[t];
+    const r = (c ? c.G * (c.S - V[t]) : 0) - d.i[t];
+    if (Math.abs(r) > 1e-9 + 1e-6 * Math.abs(d.i[t])) return false;
+  }
+  return true;
+}
+if (typeof module !== "undefined") module.exports = { solveCircuit, deviceCurrents };
+</script>
+
+<script>
+const OPTS = [
+  ["gnd", "Земля (0 В)"],
+  ["v1n", "V1 «−» (−U1 через R_V1)"],
+  ["v1p", "V1 «+» (+U1 через R_V1)"],
+  ["v2n", "V2 «−» (−U2 через R_V2)"],
+  ["v2p", "V2 «+» (+U2 через R_V2)"],
+  ["open", "Не подключён"],
+];
+const SHORT = { gnd: "земля", v1n: "V1 «−»", v1p: "V1 «+»", v2n: "V2 «−»", v2p: "V2 «+»", open: "обрыв" };
+const PRESETS = {
+  ce:   { E: "gnd", B: "v1n", C: "v2n", u1: 0.80, u2: 15, r1: 1000, r2: 1000 },
+  cb:   { E: "v1p", B: "gnd", C: "v2n", u1: 0.80, u2: 15, r1: 100,  r2: 1000 },
+  sat:  { E: "gnd", B: "v1n", C: "v2n", u1: 1.10, u2: 15, r1: 1000, r2: 1000 },
+  cut:  { E: "gnd", B: "v1p", C: "v2n", u1: 0.80, u2: 15, r1: 1000, r2: 1000 },
+  inv:  { E: "v2n", B: "v1n", C: "gnd", u1: 0.80, u2: 15, r1: 1000, r2: 1000 },
+  open: { E: "gnd", B: "open", C: "v2n", u1: 0.80, u2: 15, r1: 1000, r2: 1000 },
+};
+const $ = id => document.getElementById(id);
+const sel = { E: $("selE"), B: $("selB"), C: $("selC") };
+for (const k of ["E", "B", "C"]) for (const [v, t] of OPTS) sel[k].add(new Option(t, v));
+
+const st = { E: "gnd", B: "v1n", C: "v2n", u1: 0.8, u2: 15, r1: 1000, r2: 1000 };
+let V = [0, 0, 0], R = null;
+
+const fmt = (v, d) => v.toFixed(d).replace(".", ",").replace("-", "−");
+function fmtI(a) {
+  const x = Math.abs(a);
+  if (x < 1e-12) return "0";
+  if (x >= 1e-3) return fmt(x * 1e3, x >= 1e-2 ? 2 : 3) + " мА";
+  if (x >= 1e-6) return fmt(x * 1e6, x >= 1e-5 ? 1 : 2) + " мкА";
+  if (x >= 1e-9) return fmt(x * 1e9, 1) + " нА";
+  return fmt(x * 1e12, 1) + " пА";
+}
+const fmtV = v => fmt(Math.abs(v) < 5e-4 ? 0 : v, 3) + " В";
+
+function conn(code) {
+  switch (code) {
+    case "gnd": return { S: 0, G: 1e3 };
+    case "v1n": return { S: -st.u1, G: 1 / st.r1 };
+    case "v1p": return { S: st.u1, G: 1 / st.r1 };
+    case "v2n": return { S: -st.u2, G: 1 / st.r2 };
+    case "v2p": return { S: st.u2, G: 1 / st.r2 };
+    default: return null;
+  }
+}
+
+function recompute() {
+  const conns = [conn(st.E), conn(st.B), conn(st.C)];
+  V = solveCircuit(conns, V);
+  const d = deviceCurrents(V);
+  R = { V: V.slice(), vEB: d.vEB, vCB: d.vCB, aF: d.aF, IF: d.IF, IR: d.IR,
+        iE: d.i[0] - 1e-12 * V[0], iB: d.i[1] - 1e-12 * V[1], iC: d.i[2] - 1e-12 * V[2] };
+  renderStatus();
+}
+
+function jState(v) {
+  if (v > 0.5) return ["прямое", "открыт"];
+  if (v > 0.15) return ["прямое, слабое", "почти закрыт"];
+  if (v > -0.05) return ["нет смещения", "закрыт"];
+  return ["обратное", "закрыт"];
+}
+const opened = v => v > 0.5;
+
+function modeOf() {
+  if (st.B === "open") return ["База оборвана", "--m-cut"];
+  if (st.C === "open") return ["Коллектор оборван: диод Э–Б", "--m-cut"];
+  if (st.E === "open") return ["Эмиттер оборван: диод К–Б", "--m-cut"];
+  const e = opened(R.vEB), c = opened(R.vCB);
+  if (e && !c) return ["Активный режим", "--m-active"];
+  if (e && c) return ["Насыщение", "--m-sat"];
+  if (!e && c) return ["Инверсный режим", "--m-inv"];
+  return ["Отсечка", "--m-cut"];
+}
+
+function renderStatus() {
+  const [mname, mcol] = modeOf();
+  const m = $("mode"); m.textContent = mname; m.style.background = `var(${mcol})`;
+  const jE = jState(R.vEB), jC = jState(R.vCB);
+  $("junc").innerHTML =
+    `<tr><td>Эмиттерный (Э–Б)</td><td class="num">U<sub>ЭБ</sub> = ${fmtV(R.vEB)}</td><td>${jE[0]}</td><td>${jE[1]}, ${R.vEB > 0.15 ? "узкий" : "широкий"}</td></tr>` +
+    `<tr><td>Коллекторный (К–Б)</td><td class="num">U<sub>КБ</sub> = ${fmtV(R.vCB)}</td><td>${jC[0]}</td><td>${jC[1]}, ${R.vCB > 0.15 ? "узкий" : "широкий"}</td></tr>`;
+  const names = [["Э", st.E, R.iE], ["Б", st.B, R.iB], ["К", st.C, R.iC]];
+  $("curr").innerHTML = names.map(([n, c, i], k) => {
+    const dir = Math.abs(i) < 1e-12 ? "" : (i > 0 ? " → втекает" : " ← вытекает");
+    const el = Math.abs(i) < 1e-9 ? "почти не движутся" : (i > 0 ? "уходят из вывода в провод" : "приходят из провода в вывод");
+    return `<tr><td>${n} — ${SHORT[c]}</td><td class="num">${fmtV(R.V[k])}</td><td class="num">${fmtI(i)}${dir}</td><td>${el}</td></tr>`;
+  }).join("");
+  for (const [k, id] of [[0, "phiE"], [1, "phiB"], [2, "phiC"]]) $(id).textContent = `φ = ${fmtV(R.V[k])}`;
+  $("u1o").textContent = fmt(st.u1, 2) + " В";
+  $("u2o").textContent = fmt(st.u2, 1) + " В";
+
+  const S = [];
+  if (st.C === "open") S.push("Коллектор никуда не подключён, поэтому ток коллектора равен нулю. Дырки, дошедшие до коллектора, копятся там, коллекторный переход смещается прямо, и они возвращаются в базу. В итоге весь ток эмиттера уходит в базу, и прибор работает как обычный диод Э–Б.");
+  if (st.E === "open") S.push("Эмиттер никуда не подключён, поэтому ток эмиттера равен нулю, и работает только коллекторный переход как диод К–Б.");
+  const IF = Math.max(R.IF, 0), IR = Math.max(R.IR, 0);
+  const big = Math.max(Math.abs(R.iE), Math.abs(R.iB), Math.abs(R.iC));
+  if (big < 1e-8) {
+    S.push(`Ни один переход не смещён прямо (или цепь разорвана): инжекции нет, через выводы текут только тепловые токи порядка ${fmtI(big)}.`);
+    if (st.B === "open") S.push("База оборвана: ток базы равен нулю, электронам для рекомбинации неоткуда прийти, поэтому транзистор не открывается, хотя на коллекторе есть напряжение.");
+    S.push("Обратно смещённые переходы расширились: основных носителей рядом с границами нет, область обеднена.");
+  } else {
+    if (IF > 1e-9) {
+      S.push(`Эмиттерный переход смещён прямо (U<sub>ЭБ</sub> = ${fmtV(R.vEB)}): барьер понижен, дырки из сильно легированного эмиттера P+ инжектируются в базу — ${fmtI(IF)}.`);
+      S.push(`Дырки входят в эмиттер со стороны вывода Э: на контакте электроны уходят в провод, и в p-области на их месте остаются дырки. Поэтому ток втекает в эмиттер, а электроны в проводе Э движутся наружу.`);
+      const rec = 1 - R.aF;
+      S.push(`В тонкой n-базе дырки — неосновные носители. Они проходят базу диффузией, и лишь доля 1 − α = ${fmt(rec * 100, 2)} % (примерно 1 из ${Math.round(1 / rec)}) встречает электрон и рекомбинирует. Электроны для этой рекомбинации приходят по выводу Б — это и есть ток базы.`);
+    }
+    if (IF > 1e-9 && !opened(R.vCB)) {
+      S.push(`Коллекторный переход смещён обратно (U<sub>КБ</sub> = ${fmtV(R.vCB)}): его поле затягивает дошедшие дырки в коллектор. В коллекторе их встречают электроны, пришедшие по проводу К. α = I<sub>К</sub>/I<sub>Э</sub> = ${fmt(Math.abs(R.iC / R.iE), 4)}` +
+        (Math.abs(R.iB) > 1e-12 ? `, β = I<sub>К</sub>/I<sub>Б</sub> = ${fmt(Math.abs(R.iC / R.iB), 1)}.` : "."));
+      if (R.vCB < -1) S.push(`Обратное напряжение расширяет коллекторный переход и сужает рабочую часть базы (эффект Эрли): чем больше |U<sub>КБ</sub>|, тем меньше рекомбинация и тем ближе α к 1.`);
+    }
+    if (IR > 1e-9) {
+      S.push(`Коллекторный переход тоже смещён прямо (U<sub>КБ</sub> = ${fmtV(R.vCB)}): теперь и коллектор инжектирует дырки в базу — встречный поток ${fmtI(IR)}.`);
+      if (opened(R.vEB)) S.push(`Встречный поток вычитается из собранного: ток коллектора ${fmtI(R.iC)} меньше, чем β·I<sub>Б</sub>. Ток базы растёт — электронам приходится рекомбинировать с дырками обоих потоков. Это насыщение: ток коллектора больше не управляется током базы.`);
+      else S.push(`Эмиттерный переход закрыт и собирает дырки, пришедшие из коллектора: эмиттер и коллектор поменялись ролями. Коллектор легирован слабее эмиттера и инжектирует хуже, поэтому коэффициент передачи мал (α<sub>I</sub> = ${fmt(AR, 2)}) и половина дырок рекомбинирует в базе.`);
+    }
+  }
+  $("steps").innerHTML = S.map(s => `<li>${s}</li>`).join("");
+}
+
+function syncInputs() {
+  for (const k of ["E", "B", "C"]) sel[k].value = st[k];
+  $("u1").value = st.u1; $("u2").value = st.u2; $("r1").value = st.r1; $("r2").value = st.r2;
+}
+for (const k of ["E", "B", "C"]) sel[k].addEventListener("change", () => { st[k] = sel[k].value; recompute(); });
+$("u1").addEventListener("input", e => { st.u1 = +e.target.value; recompute(); });
+$("u2").addEventListener("input", e => { st.u2 = +e.target.value; recompute(); });
+$("r1").addEventListener("change", e => { st.r1 = +e.target.value; recompute(); });
+$("r2").addEventListener("change", e => { st.r2 = +e.target.value; recompute(); });
+document.querySelectorAll("[data-p]").forEach(b => b.addEventListener("click", () => {
+  Object.assign(st, PRESETS[b.dataset.p]); syncInputs(); recompute();
+}));
+
+/* ---------- Анимация ---------- */
+const cv = $("cv"), ctx = cv.getContext("2d");
+const W = 960, H = 420;
+const X0 = 150, XE = 400, XC = 500, X1 = 810, Y0 = 190, Y1 = 330, YM = 260;
+const PT = { E: [40, YM], B: [450, 58], C: [920, YM] };
+let C = {};
+function readColors() {
+  const s = getComputedStyle(document.documentElement);
+  for (const k of ["panel", "ink", "ink-2", "line", "wire", "reg-pp", "reg-p", "reg-n", "dep", "dep-line", "hole", "elec", "flash", "cur"]) C[k] = s.getPropertyValue("--" + k).trim();
+}
+readColors();
+matchMedia("(prefers-color-scheme: dark)").addEventListener("change", readColors);
+
+function fitCanvas() {
+  const dpr = Math.min(2, window.devicePixelRatio || 1);
+  cv.width = W * dpr; cv.height = H * dpr;
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+}
+fitCanvas();
+
+function depl(v) { return 14 * Math.sqrt(Math.max(0.04, 0.75 - v)); }
+function geom() {
+  const wE = depl(R.vEB), wC = depl(R.vCB);
+  return { eL: XE - 0.2 * wE, eR: XE + 0.8 * wE, cL: XC - 0.3 * wC, cR: XC + 0.7 * wC };
+}
+
+// фон: основные носители
+const MAJ = [];
+(function seed() {
+  let s = 7; const rnd = () => (s = (s * 16807) % 2147483647) / 2147483647;
+  const add = (n, x0, x1, t) => { for (let i = 0; i < n; i++) MAJ.push({ x: x0 + rnd() * (x1 - x0), y: Y0 + 8 + rnd() * (Y1 - Y0 - 16), t, ph: rnd() * 6.28 }); };
+  add(150, X0 + 4, XE - 2, "h");
+  add(34, XE + 2, XC - 2, "e");
+  add(80, XC + 2, X1 - 4, "h");
+})();
+
+let P = [], F = [], acc = {}, last = performance.now(), T = 0;
+const rand = (a, b) => a + Math.random() * (b - a);
+const ry = () => rand(Y0 + 10, Y1 - 10);
+function rate(i, imax) { return imax <= 0 ? 0 : Math.min(55, 12 * Math.log10(1 + imax / 1e-7)) * Math.max(0, i) / imax; }
+function spawnN(key, r, dt) { acc[key] = (acc[key] || 0) + Math.max(0, r * dt); const n = Math.floor(acc[key]); acc[key] -= n; return Math.max(0, n); }
+
+function newHoleFromE() {
+  const g = geom(), rec = Math.random() < Math.min(1, (1 - R.aF) * ($("exag").checked ? 10 : 1));
+  P.push({ k: "h", src: "E", ph: "drift", x: X0 + 2, y: ry(), rec, tx: rand(g.eR + 4, Math.max(g.eR + 6, g.cL - 4)) });
+}
+function newHoleFromC() {
+  const g = geom(), rec = Math.random() < (1 - AR);
+  P.push({ k: "h", src: "C", ph: "drift", x: X1 - 2, y: ry(), rec, tx: rand(g.eR + 4, Math.max(g.eR + 6, g.cL - 4)) });
+}
+function newWireE(dirOut) {
+  P.push(dirOut ? { k: "w", x: X0 - 10, y: YM, x1: PT.E[0] + 14, y1: YM } : { k: "w", x: PT.E[0] + 14, y: YM, x1: X0 - 10, y1: YM });
+}
+function newWireC(dirOut) {
+  P.push(dirOut ? { k: "w", x: X1 + 10, y: YM, x1: PT.C[0] - 14, y1: YM } : { k: "w", x: PT.C[0] - 14, y: YM, x1: X1 + 10, y1: YM });
+}
+function newRecElectron(h) { P.push({ k: "eb", path: [[450, PT.B[1] + 14], [450, Y0 + 4], [h.x, h.y]], seg: 0, x: 450, y: PT.B[1] + 14, h }); }
+function newBaseOut() { P.push({ k: "eb", path: [[rand(XE + 15, XC - 15), ry()], [450, Y0 + 4], [450, PT.B[1] + 14]], seg: 0, x: 0, y: 0, h: null, out: true }); }
+
+function step(dt) {
+  const g = geom();
+  const IF = Math.max(R.IF, 0), IR = Math.max(R.IR, 0);
+  const imax = Math.max(IF, IR, Math.abs(R.iE), Math.abs(R.iC), Math.abs(R.iB));
+  if (P.length < 700) {
+    for (let n = spawnN("hE", rate(IF, imax), dt); n--;) newHoleFromE();
+    for (let n = spawnN("hC", rate(IR, imax), dt); n--;) newHoleFromC();
+    for (let n = spawnN("wE", rate(Math.abs(R.iE), imax), dt); n--;) newWireE(R.iE > 0);
+    for (let n = spawnN("wC", rate(Math.abs(R.iC), imax), dt); n--;) newWireC(R.iC > 0);
+    if (R.iB > 0) for (let n = spawnN("bO", rate(R.iB, imax), dt); n--;) newBaseOut();
+  }
+  const sweepE = R.vEB < 0.3, sweepC = R.vCB < 0.3;
+  for (const p of P) {
+    if (p.k === "h") {
+      p.y += rand(-1, 1) * 60 * dt; p.y = Math.max(Y0 + 6, Math.min(Y1 - 6, p.y));
+      if (p.src === "E") {
+        if (p.ph === "drift") { p.x += 95 * dt; if (p.x >= g.eL) p.ph = "inj"; }
+        else if (p.ph === "inj") { p.x += 260 * dt; if (p.x >= g.eR) p.ph = "base"; }
+        else if (p.ph === "base") {
+          p.x += (55 + rand(-1, 1) * 160) * dt; p.y += rand(-1, 1) * 90 * dt;
+          if (p.x < g.eR) p.x = g.eR + 1;
+          if (p.rec && p.x >= p.tx) { p.ph = "wait"; newRecElectron(p); }
+          else if (p.x >= g.cL) p.ph = "sweep";
+        } else if (p.ph === "sweep") { p.x += (sweepC ? 520 : 200) * dt; if (p.x >= g.cR) p.ph = "coll"; }
+        else if (p.ph === "coll") { p.x += 110 * dt; if (p.x >= X1 - 2) p.dead = true; }
+        else if (p.ph === "wait") { p.x += rand(-1, 1) * 30 * dt; }
+      } else {
+        if (p.ph === "drift") { p.x -= 95 * dt; if (p.x <= g.cR) p.ph = "inj"; }
+        else if (p.ph === "inj") { p.x -= 260 * dt; if (p.x <= g.cL) p.ph = "base"; }
+        else if (p.ph === "base") {
+          p.x -= (55 + rand(-1, 1) * 160) * dt; p.y += rand(-1, 1) * 90 * dt;
+          if (p.x > g.cL) p.x = g.cL - 1;
+          if (p.rec && p.x <= p.tx) { p.ph = "wait"; newRecElectron(p); }
+          else if (p.x <= g.eR) p.ph = "sweep";
+        } else if (p.ph === "sweep") { p.x -= (sweepE ? 520 : 200) * dt; if (p.x <= g.eL) p.ph = "coll"; }
+        else if (p.ph === "coll") { p.x -= 110 * dt; if (p.x <= X0 + 2) p.dead = true; }
+        else if (p.ph === "wait") { p.x += rand(-1, 1) * 30 * dt; }
+      }
+    } else if (p.k === "w") {
+      const dx = p.x1 - p.x, dy = p.y1 - p.y, L = Math.hypot(dx, dy), s = 150 * dt;
+      if (L <= s) p.dead = true; else { p.x += dx / L * s; p.y += dy / L * s; }
+    } else if (p.k === "eb") {
+      if (p.seg === 0 && p.x === 0 && p.y === 0) { p.x = p.path[0][0]; p.y = p.path[0][1]; }
+      const tgt = p.seg === 1 && p.h && !p.out ? [p.h.x, p.h.y] : p.path[p.seg + 1];
+      if (p.seg === 1 && p.h && !p.out) p.path[2] = [p.h.x, p.h.y];
+      const dx = tgt[0] - p.x, dy = tgt[1] - p.y, L = Math.hypot(dx, dy), s = 170 * dt;
+      if (L <= s) {
+        p.x = tgt[0]; p.y = tgt[1]; p.seg++;
+        if (p.seg >= p.path.length - 1) {
+          p.dead = true;
+          if (p.h) { p.h.dead = true; F.push({ x: p.x, y: p.y, t: 0 }); }
+        }
+      } else { p.x += dx / L * s; p.y += dy / L * s; }
+    }
+  }
+  for (const p of P) if (p.k === "h" && p.dead && p.ph === "coll") F.push({ x: p.x, y: p.y, t: 0, small: true });
+  P = P.filter(p => !p.dead);
+  for (const f of F) f.t += dt;
+  F = F.filter(f => f.t < 0.5);
+}
+
+function drawHole(x, y, a) { ctx.globalAlpha = a; ctx.strokeStyle = C.hole; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(x, y, 4.5, 0, 6.283); ctx.stroke(); ctx.globalAlpha = 1; }
+function drawElec(x, y, a) { ctx.globalAlpha = a; ctx.fillStyle = C.elec; ctx.beginPath(); ctx.arc(x, y, 3.4, 0, 6.283); ctx.fill(); ctx.globalAlpha = 1; }
+function text(t, x, y, o = {}) {
+  ctx.fillStyle = o.color || C.ink; ctx.font = `${o.w || 500} ${o.s || 13}px "Golos Text", system-ui, sans-serif`;
+  ctx.textAlign = o.a || "center"; ctx.textBaseline = o.b || "middle"; ctx.fillText(t, x, y);
+}
+function arrow(x, y, dir, label, lx, ly) {
+  ctx.fillStyle = C.cur; ctx.beginPath();
+  const s = 7;
+  if (dir === "r") { ctx.moveTo(x + s, y); ctx.lineTo(x - s, y - s); ctx.lineTo(x - s, y + s); }
+  if (dir === "l") { ctx.moveTo(x - s, y); ctx.lineTo(x + s, y - s); ctx.lineTo(x + s, y + s); }
+  if (dir === "d") { ctx.moveTo(x, y + s); ctx.lineTo(x - s, y - s); ctx.lineTo(x + s, y - s); }
+  if (dir === "u") { ctx.moveTo(x, y - s); ctx.lineTo(x - s, y + s); ctx.lineTo(x + s, y + s); }
+  ctx.closePath(); ctx.fill();
+  text(label, lx, ly, { s: 12, color: C["ink-2"], w: 500 });
+}
+function terminal(key, letter) {
+  const [x, y] = PT[key];
+  ctx.fillStyle = C.panel; ctx.strokeStyle = C.ink; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.arc(x, y, 14, 0, 6.283); ctx.fill(); ctx.stroke();
+  text(letter, x, y + 1, { s: 15, w: 600 });
+}
+
+function draw() {
+  ctx.clearRect(0, 0, W, H);
+  const g = geom();
+  // провода
+  ctx.strokeStyle = C.wire; ctx.lineWidth = 3;
+  ctx.beginPath(); ctx.moveTo(PT.E[0], YM); ctx.lineTo(X0 - 10, YM);
+  ctx.moveTo(X1 + 10, YM); ctx.lineTo(PT.C[0], YM);
+  ctx.moveTo(450, PT.B[1]); ctx.lineTo(450, Y0 - 10); ctx.stroke();
+  // контакты
+  ctx.fillStyle = C.wire;
+  ctx.fillRect(X0 - 10, Y0, 10, Y1 - Y0); ctx.fillRect(X1, Y0, 10, Y1 - Y0); ctx.fillRect(XE + 10, Y0 - 10, XC - XE - 20, 10);
+  // области
+  ctx.fillStyle = C["reg-pp"]; ctx.fillRect(X0, Y0, XE - X0, Y1 - Y0);
+  ctx.fillStyle = C["reg-n"]; ctx.fillRect(XE, Y0, XC - XE, Y1 - Y0);
+  ctx.fillStyle = C["reg-p"]; ctx.fillRect(XC, Y0, X1 - XC, Y1 - Y0);
+  // обеднённые слои
+  ctx.fillStyle = C.dep;
+  ctx.fillRect(g.eL, Y0, g.eR - g.eL, Y1 - Y0); ctx.fillRect(g.cL, Y0, g.cR - g.cL, Y1 - Y0);
+  ctx.setLineDash([4, 4]); ctx.strokeStyle = C["dep-line"]; ctx.lineWidth = 1;
+  for (const x of [g.eL, g.eR, g.cL, g.cR]) { ctx.beginPath(); ctx.moveTo(x, Y0); ctx.lineTo(x, Y1); ctx.stroke(); }
+  ctx.setLineDash([]);
+  ctx.strokeStyle = C.ink; ctx.lineWidth = 1.5; ctx.strokeRect(X0, Y0, X1 - X0, Y1 - Y0);
+  // подписи областей
+  text("ЭМИТТЕР · P+", (X0 + XE) / 2, Y1 + 16, { w: 600 });
+  text("БАЗА · n", (XE + XC) / 2, Y1 + 16, { w: 600 });
+  text("КОЛЛЕКТОР · p", (XC + X1) / 2, Y1 + 16, { w: 600 });
+  text("эмиттерный переход", XE, Y1 + 36, { s: 11, color: C["ink-2"] });
+  text("коллекторный переход", XC + 40, Y1 + 52, { s: 11, color: C["ink-2"] });
+  // рабочая ширина базы
+  const wb = Math.max(0, g.cL - g.eR);
+  ctx.strokeStyle = C["ink-2"]; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(g.eR, Y0 - 22); ctx.lineTo(g.cL, Y0 - 22); ctx.stroke();
+  text(`рабочая база ${Math.round(wb / (XC - XE) * 100)} %`, 340, Y0 - 22, { s: 11, color: C["ink-2"], a: "right" });
+  // основные носители
+  for (const m of MAJ) {
+    const x = m.x + 2 * Math.sin(T * 2 + m.ph), y = m.y + 2 * Math.cos(T * 1.7 + m.ph);
+    if ((x > g.eL && x < g.eR) || (x > g.cL && x < g.cR)) continue;
+    if (m.t === "h") { ctx.globalAlpha = 0.28; ctx.strokeStyle = C["ink-2"]; ctx.lineWidth = 1.3; ctx.beginPath(); ctx.arc(x, y, 3.5, 0, 6.283); ctx.stroke(); }
+    else { ctx.globalAlpha = 0.3; ctx.fillStyle = C["ink-2"]; ctx.beginPath(); ctx.arc(x, y, 2.6, 0, 6.283); ctx.fill(); }
+    ctx.globalAlpha = 1;
+  }
+  // подвижные носители
+  for (const p of P) {
+    if (p.k === "h") drawHole(p.x, p.y, 1);
+    else drawElec(p.x, p.y, 1);
+  }
+  for (const f of F) {
+    ctx.globalAlpha = 1 - f.t / 0.5; ctx.strokeStyle = C.flash; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.arc(f.x, f.y, (f.small ? 4 : 6) + f.t * 24, 0, 6.283); ctx.stroke(); ctx.globalAlpha = 1;
+  }
+  // выводы, подписи, токи
+  terminal("E", "Э"); terminal("B", "Б"); terminal("C", "К");
+  text(`${SHORT[st.E]} · φ = ${fmtV(R.V[0])}`, PT.E[0] - 14, YM - 30, { s: 12, a: "left", color: C["ink-2"] });
+  text(`${SHORT[st.C]} · φ = ${fmtV(R.V[2])}`, PT.C[0] + 14, YM - 30, { s: 12, a: "right", color: C["ink-2"] });
+  text(`${SHORT[st.B]} · φ = ${fmtV(R.V[1])}`, 472, PT.B[1], { s: 12, a: "left", color: C["ink-2"] });
+  if (Math.abs(R.iE) > 1e-9) arrow(95, YM, R.iE > 0 ? "r" : "l", "I_Э " + fmtI(R.iE), 95, YM + 24);
+  if (Math.abs(R.iC) > 1e-9) arrow(865, YM, R.iC > 0 ? "l" : "r", "I_К " + fmtI(R.iC), 865, YM + 24);
+  if (Math.abs(R.iB) > 1e-9) arrow(450, 125, R.iB > 0 ? "d" : "u", "I_Б " + fmtI(R.iB), 410, 125);
+}
+
+function loop(now) {
+  // первый кадр rAF может прийти с меткой раньше performance.now() → dt < 0 → вечный цикл спавна
+  const dt = Math.max(0, Math.min(0.05, (now - last) / 1000)); last = now;
+  if (!$("pause").checked) { T += dt; step(dt); }
+  draw();
+  requestAnimationFrame(loop);
+}
+syncInputs();
+recompute();
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>
