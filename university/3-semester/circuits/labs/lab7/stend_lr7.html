@@ -1,0 +1,944 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Стенд ЛР-7</title>
+<style>
+:root{
+  --bg:#f6f5f1; --card:#ffffff; --ink:#1d1d1b; --muted:#6b6a66; --line:#dddbd3; --wire:#3d3d3a;
+  --soft:#efede7; --cb:#2563d9; --cc:#e0661a; --ce:#8b4fd6; --ok:#25865a; --bad:#c43a3a; --amber:#b7770a;
+  --n:#dbe6fb; --p:#fbe0dc;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#141413; --card:#1e1e1c; --ink:#ecebe6; --muted:#a3a19a; --line:#363531; --wire:#cfcdc5;
+    --soft:#2a2926; --cb:#6aa2ff; --cc:#ff8c42; --ce:#bb8dff; --ok:#4cc38a; --bad:#ff6b6b; --amber:#e3a536;
+    --n:#1f2c44; --p:#442624;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#141413; --card:#1e1e1c; --ink:#ecebe6; --muted:#a3a19a; --line:#363531; --wire:#cfcdc5;
+  --soft:#2a2926; --cb:#6aa2ff; --cc:#ff8c42; --ce:#bb8dff; --ok:#4cc38a; --bad:#ff6b6b; --amber:#e3a536;
+  --n:#1f2c44; --p:#442624;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15.5px/1.6 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+.wrap{max-width:1280px;margin:0 auto;padding:16px}
+h1{font-size:21px;margin:0 0 2px;font-weight:600}
+.sub{color:var(--muted);font-size:13px;margin:0 0 12px}
+.tabs{display:flex;gap:6px;margin:8px 0 12px;flex-wrap:wrap;position:sticky;top:0;background:var(--bg);padding:6px 0;z-index:5}
+.tabs button,.btn{font:inherit;font-size:14px;padding:6px 14px;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer}
+.tabs button[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.btn[aria-pressed="true"]{border-color:var(--ink);box-shadow:inset 0 0 0 1px var(--ink)}
+.btn.small{font-size:13px;padding:4px 10px}
+.grid{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:14px}
+@media (max-width:980px){.grid{grid-template-columns:1fr}}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin-bottom:14px}
+.card h3{font-size:13px;font-weight:600;color:var(--muted);margin:0 0 8px;text-transform:uppercase;letter-spacing:.04em}
+.k h2{font-size:19px;margin:4px 0 8px}
+.k h4{font-size:16px;margin:18px 0 4px}
+.k p{margin:6px 0}
+.k li{margin:3px 0}
+svg{width:100%;height:auto;display:block}
+svg text{font-family:inherit}
+.w{stroke:var(--wire);stroke-width:1.7;fill:none;stroke-linejoin:round}
+.dot{fill:var(--wire)}
+.plate{stroke:var(--wire);stroke-width:2.8}
+.rbox{fill:var(--card);stroke:var(--wire);stroke-width:1.7}
+.lbl{fill:var(--ink);font-size:14px}
+.lbl.m{fill:var(--muted);font-size:13px}
+.lbl.b{font-weight:600}
+.lbl.s{font-size:12px}
+.tag{font-size:13.5px;font-weight:700;paint-order:stroke;stroke:var(--card);stroke-width:4px}
+.hit{fill:transparent;cursor:pointer}
+.hit:hover{fill:var(--amber);opacity:.12}
+.flow{fill:none;stroke-width:4;stroke-dasharray:8 8;stroke-linecap:round;stroke-linejoin:round;opacity:.8}
+@keyframes run{to{stroke-dashoffset:-32}}
+@media (prefers-reduced-motion:no-preference){.flow{animation:run 1s linear infinite}}
+.cap-off .plate{stroke:var(--muted);stroke-dasharray:3 3}
+.cap-ac .plate{stroke:var(--ok);stroke-width:4}
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:13.5px;color:var(--muted);margin-top:6px}
+.legend i{display:inline-block;width:22px;height:0;border-top:3px dashed;vertical-align:middle;margin-right:6px}
+.ctrl{display:grid;grid-template-columns:auto 1fr auto;gap:6px 12px;align-items:center;margin-top:10px}
+.ctrl label{font-size:14px;white-space:nowrap}
+.ctrl input[type=range]{width:100%;accent-color:var(--ink)}
+.ctrl output{font-variant-numeric:tabular-nums;min-width:110px;font-size:13px;color:var(--muted)}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:8px 0}
+.hint{font-size:13px;color:var(--muted);margin:6px 0 0}
+.big{font-size:22px;font-weight:600;font-variant-numeric:tabular-nums}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:2px 14px;font-size:14.5px;font-variant-numeric:tabular-nums}
+.kv b{font-weight:600}
+.ok{color:var(--ok)} .bad{color:var(--bad)} .amb{color:var(--amber)} .mut{color:var(--muted)}
+.box{background:var(--soft);border-radius:10px;padding:10px 12px;margin:10px 0;font-size:15px}
+.box.warn{border-left:4px solid var(--amber)}
+.box.say{border-left:4px solid var(--ok)}
+.f{font-family:"Cambria Math",Cambria,Georgia,serif;font-size:16.5px;background:var(--soft);padding:1px 8px;border-radius:6px;white-space:nowrap}
+table{border-collapse:collapse;font-size:14px;font-variant-numeric:tabular-nums;width:100%}
+th,td{border-bottom:1px solid var(--line);padding:4px 8px;text-align:right;vertical-align:top}
+th:first-child,td:first-child{text-align:left}
+td.l,th.l{text-align:left}
+th{color:var(--muted);font-weight:600}
+tr.cur td{background:var(--soft);font-weight:600}
+.readout{font-size:13.5px;color:var(--muted);min-height:22px;font-variant-numeric:tabular-nums}
+details{border:1px solid var(--line);border-radius:10px;padding:8px 12px;margin:8px 0;background:var(--card)}
+details summary{cursor:pointer;font-weight:600}
+details[open] summary{margin-bottom:6px}
+.show{color:var(--amber);font-weight:600}
+ol.steps li{margin:5px 0;padding:2px 6px}
+.step-on{background:var(--soft);border-radius:6px;font-weight:600}
+.scroll{overflow-x:auto}
+.theme{position:absolute;top:14px;right:16px}
+</style>
+</head>
+<body>
+<div class="wrap" style="position:relative">
+<button class="btn small theme" id="themeBtn">тема</button>
+<h1>ЛР-7 · Резистивный усилитель на транзисторе 2N2222A (n-p-n) — стенд и конспект</h1>
+<p class="sub">Числа — из таблиц отчёта (модель, сверенная со скринами Multisim ≤ 0,6 дБ). Вкладки идут в порядке отчёта. Сначала читай конспект вкладки, потом крути стенд.</p>
+
+<div class="tabs" id="tabs">
+  <button data-t="npn" aria-pressed="true">1. n-p-n транзистор</button>
+  <button data-t="sch">2. Схема ОЭ (рис. 2.1)</button>
+  <button data-t="ach">3. АЧХ и C1, C3, C4</button>
+  <button data-t="r4">4. R4 и термостабилизация</button>
+  <button data-t="res">5. Резонансный (рис. 2.2)</button>
+  <button data-t="q">6. Вопросы и шпаргалка</button>
+</div>
+
+<!-- ======================= 1. NPN ======================= -->
+<section id="t-npn">
+<div class="card">
+  <h3>Внутри транзистора: три слоя n — p — n (двигай U_БЭ)</h3>
+  <svg id="npnSvg" viewBox="0 0 720 300" aria-label="Слои n-p-n транзистора"></svg>
+  <div class="legend">
+    <span><svg width="14" height="14" style="display:inline;width:14px;vertical-align:middle"><circle cx="7" cy="7" r="4" fill="var(--cb)"/></svg> свободный электрон</span>
+    <span><svg width="14" height="14" style="display:inline;width:14px;vertical-align:middle"><circle cx="7" cy="7" r="4" fill="none" stroke="var(--bad)" stroke-width="1.6"/></svg> дырка (в базе)</span>
+    <span>серые полосы — запирающие слои двух p-n-переходов</span>
+  </div>
+  <div class="ctrl">
+    <label for="ube">U<sub>БЭ</sub> (база − эмиттер)</label>
+    <input id="ube" type="range" min="0" max="0.75" step="0.005" value="0.65">
+    <output id="ubeO"></output>
+  </div>
+  <div class="row">
+    <span class="mut" style="font-size:14px">U<sub>КЭ</sub>:</span>
+    <button class="btn small" data-uce="10" aria-pressed="true">большое — коллекторный переход закрыт</button>
+    <button class="btn small" data-uce="0.1">0,1 В — оба перехода открыты (насыщение)</button>
+  </div>
+</div>
+<div class="grid">
+<div class="card k">
+  <h2>Конспект: как работает n-p-n транзистор</h2>
+
+  <h4>1. Полупроводник за минуту</h4>
+  <p>Чистый кремний ток почти не проводит. В него добавляют примеси (это называется <b>легирование</b>):</p>
+  <ul>
+    <li><b>n-тип</b> (negative): примесь даёт <b>лишние электроны</b>. Свободные носители заряда — электроны (минус).</li>
+    <li><b>p-тип</b> (positive): примесь даёт <b>нехватку электронов</b>. Пустое место, где должен быть электрон, называют <b>дыркой</b>; она ведёт себя как плюсовой заряд.</li>
+  </ul>
+
+  <h4>2. p-n-переход (это ЛР-5, диод)</h4>
+  <p>Где n и p соприкасаются, электроны из n заполняют дырки в p. У границы получается тонкий <b>запирающий слой</b>, в котором свободных носителей нет. На нём возникает барьер: у кремния ≈ <b>0,6–0,7 В</b>.</p>
+  <ul>
+    <li><b>Прямое смещение</b> (плюс на p, минус на n, больше ≈ 0,6 В): барьер падает, переход <b>открыт</b>, ток идёт.</li>
+    <li><b>Обратное смещение</b> (плюс на n): слой становится шире, переход <b>закрыт</b>, тока почти нет.</li>
+  </ul>
+  <p class="hint">Подробная анимация одного перехода — <code>labs/lab6/stend_pn.html</code>.</p>
+
+  <h4>3. Транзистор = два перехода и очень тонкая середина</h4>
+  <p>n-p-n — это три слоя: <b>эмиттер (n)</b> → <b>база (p)</b> → <b>коллектор (n)</b>. Внутри два перехода: <b>эмиттерный</b> (Э–Б) и <b>коллекторный</b> (Б–К).</p>
+  <p>Если бы это были просто два диода спиной к спине, транзистор бы не работал. Всё решает то, что <b>база очень тонкая и в ней мало дырок</b>.</p>
+  <ol>
+    <li>Подаём на базу ≈ 0,65 В относительно эмиттера. <b>Эмиттерный переход открыт</b>, электроны из эмиттера валят в базу.</li>
+    <li>База тонкая, дырок мало, поэтому почти ни один электрон не успевает встретить дырку.</li>
+    <li>Электроны доходят до коллекторного перехода. Коллектор под большим плюсом (переход закрыт <i>для своих</i> носителей), и его поле <b>затягивает</b> пришедшие электроны в коллектор.</li>
+    <li>Примерно 1 из β (≈ 100) электронов всё-таки рекомбинирует в базе и уходит через вывод базы. Это <b>ток базы</b>.</li>
+  </ol>
+  <div class="box">
+    <span class="f">I<sub>Э</sub> = I<sub>К</sub> + I<sub>Б</sub></span> &nbsp; <span class="f">β = I<sub>К</sub>/I<sub>Б</sub> ≈ 100…300</span> &nbsp; <span class="f">α = I<sub>К</sub>/I<sub>Э</sub> ≈ 0,99</span><br>
+    Малый ток базы управляет в β раз большим током коллектора. Энергию на этот ток даёт <b>источник питания</b>, а не входной сигнал. Это и есть <b>усиление</b>.
+  </div>
+
+  <h4>4. Почему входной сигнал должен быть маленьким</h4>
+  <p>Ток коллектора зависит от U<sub>БЭ</sub> <b>экспоненциально</b>: <span class="f">I<sub>К</sub> ≈ I<sub>S</sub>·e<sup>U<sub>БЭ</sub>/0,026</sup></span>. Каждые +18 мВ удваивают ток, +60 мВ увеличивают в 10 раз. Кривая крутая и изогнутая, но маленький кусок кривой почти прямой.</p>
+  <p>Поэтому сигнал берут маленьким (у нас <b>10 мВ</b>, в методичке «не более 0,1 В»): тогда ток качается почти пропорционально, и синус остаётся синусом. Большой сигнал задевает изгиб, и форма <b>искажается</b> (контрольный вопрос 10).</p>
+
+  <h4>5. Почему n-p-n и куда смотрит стрелка</h4>
+  <p>Электроны летят Э → К. Условный ток (от плюса к минусу) течёт наоборот: К → Э и <b>из эмиттера наружу</b>. Поэтому стрелка эмиттера n-p-n смотрит <b>наружу</b>, и питание на коллектор подаётся <b>плюсом</b>. У p-n-p (2N1132A в ЛР-6) всё зеркально: стрелка внутрь, коллектор под минусом.</p>
+  <div class="box say"><b>Сказать на защите:</b> «2N2222A — n-p-n транзистор. Эмиттерный переход открыт напряжением смещения около 0,65 В, коллекторный закрыт плюсом питания. Электроны из эмиттера проходят тонкую базу и затягиваются коллектором. Малый ток базы управляет в β раз большим током коллектора».</div>
+</div>
+<div>
+<div class="card">
+  <h3>Сейчас на стенде</h3>
+  <div id="npnMode" class="big"></div>
+  <div class="kv" style="margin-top:8px">
+    <span>I<sub>К</sub></span><b id="npnIc"></b>
+    <span>I<sub>Б</sub></span><b id="npnIb"></b>
+    <span>эмиттерный переход</span><b id="npnJe"></b>
+    <span>коллекторный переход</span><b id="npnJc"></b>
+  </div>
+  <p id="npnText" style="font-size:14.5px"></p>
+</div>
+<div class="card">
+  <h3>Три режима — выучить таблицу</h3>
+  <div class="scroll"><table>
+    <tr><th>Режим</th><th class="l">Эмиттерный</th><th class="l">Коллекторный</th><th class="l">Что делает</th></tr>
+    <tr><td>Отсечка</td><td class="l">закрыт</td><td class="l">закрыт</td><td class="l">тока нет — «ключ разомкнут»</td></tr>
+    <tr><td><b>Активный</b></td><td class="l"><b>открыт</b></td><td class="l"><b>закрыт</b></td><td class="l"><b>усиливает</b>, I<sub>К</sub> = β·I<sub>Б</sub></td></tr>
+    <tr><td>Насыщение</td><td class="l">открыт</td><td class="l">открыт</td><td class="l">U<sub>КЭ</sub> ≈ 0,1–0,3 В, ток ограничен R3, <b>почти не усиливает</b> — «ключ замкнут»</td></tr>
+  </table></div>
+  <div class="box warn">Наша схема методички: U<sub>КЭ</sub> = 0,18 В, то есть <b>граница насыщения</b>. Поэтому K всего ≈ 9 (а не десятки–сотни) и форма слегка искажена. Это не ошибка сборки: так подобраны номиналы методички.</div>
+</div>
+<div class="card">
+  <h3>Три схемы включения (контрольный вопрос 1)</h3>
+  <div class="scroll"><table>
+    <tr><th></th><th class="l">Вход → выход</th><th class="l">Входной ток</th><th class="l">Что усиливает</th></tr>
+    <tr><td><b>ОЭ</b> (наша)</td><td class="l">база → коллектор</td><td class="l">средний (I<sub>Б</sub>)</td><td class="l">ток и напряжение, мощность — больше всех; фаза 180°</td></tr>
+    <tr><td>ОБ</td><td class="l">эмиттер → коллектор</td><td class="l"><b>максимальный</b> (I<sub>Э</sub>)</td><td class="l">напряжение, ток — нет (α &lt; 1)</td></tr>
+    <tr><td>ОК</td><td class="l">база → эмиттер</td><td class="l"><b>минимальный</b></td><td class="l">ток, напряжение — нет (K ≈ 1, «повторитель»)</td></tr>
+  </table></div>
+  <p class="hint">«Общий» — электрод, который общий для входа и выхода (по переменному току сидит на земле). У нас эмиттер через C4.</p>
+</div>
+</div>
+</div>
+</section>
+
+<!-- ======================= 2. SCHEME ======================= -->
+<section id="t-sch" hidden>
+<div class="card">
+  <h3>Рис. 2.1 — резистивный каскад ОЭ, как в Multisim. Кликни на любую деталь или прибор</h3>
+  <div class="row" id="schModes">
+    <button class="btn small" data-m="all" aria-pressed="true">Вся схема</button>
+    <button class="btn small" data-m="dc">Слой 1: постоянный ток (рабочая точка)</button>
+    <button class="btn small" data-m="ac">Слой 2: переменный сигнал</button>
+  </div>
+  <svg id="schSvg" viewBox="0 0 960 580" aria-label="Схема резистивного усилителя"></svg>
+  <div class="legend" id="schLegend"></div>
+  <p class="hint">Метки <b style="color:var(--cb)">ВХ</b> и <b style="color:var(--cc)">ВЫХ</b> — это провода, которые я не тянул через всю схему. Одинаковые метки = соединены. На скрине Multisim это обычные длинные провода.</p>
+</div>
+<div class="grid">
+<div class="card">
+  <h3>Объяснение слоя</h3>
+  <div id="schModeB" class="k"></div>
+</div>
+<div class="card">
+  <h3 id="schInfoT">Деталь</h3>
+  <div id="schInfoB" style="font-size:15px"></div>
+</div>
+</div>
+<div class="card k">
+  <h2>Конспект: как читать эту схему</h2>
+  <h4>Главная идея — у схемы два «слоя»</h4>
+  <p>Через схему одновременно идут две вещи: <b>постоянный ток</b> от батарейки и <b>переменный сигнал</b> 10 мВ от генератора. Конденсатор для них разный:</p>
+  <ul>
+    <li>для <b>постоянного</b> тока конденсатор — <b>разрыв</b> (заряжается и больше не пропускает);</li>
+    <li>для <b>переменного</b> сигнала большой конденсатор — почти <b>провод</b> (<span class="f">X<sub>C</sub> = 1/(2πfC)</span> маленькое).</li>
+  </ul>
+  <p>Поэтому каждую деталь объясняем так: <b>что она делает для постоянного тока и что для сигнала</b>.</p>
+
+  <h4>Таблица ролей (выучить)</h4>
+  <div class="scroll"><table>
+    <tr><th>Деталь</th><th class="l">Название роли</th><th class="l">Для постоянного</th><th class="l">Для сигнала</th></tr>
+    <tr><td>V1 10 В</td><td class="l">питание E<sub>п</sub></td><td class="l">даёт ток и энергию</td><td class="l">≈ земля</td></tr>
+    <tr><td>C2 10 нФ</td><td class="l">блокировочный по питанию</td><td class="l">разрыв</td><td class="l">замыкает +10 В на землю, гасит помехи</td></tr>
+    <tr><td>R1, R2 20 кОм</td><td class="l">делитель смещения</td><td class="l">≈ 5 В на базу (рабочая точка)</td><td class="l">входное сопротивление ≈ 10 кОм</td></tr>
+    <tr><td>C1 1 мкФ</td><td class="l">разделительный входной</td><td class="l">разрыв: генератор не сбивает смещение</td><td class="l">провод: пускает сигнал на базу</td></tr>
+    <tr><td>Q1 2N2222A</td><td class="l">усилительный элемент, ОЭ</td><td class="l">I<sub>К</sub> = 2,1 мА</td><td class="l">качает ток коллектора</td></tr>
+    <tr><td>R3 2,7 кОм</td><td class="l">нагрузка коллектора R<sub>к</sub></td><td class="l">задаёт U<sub>К</sub> = 10 − I<sub>К</sub>·R3</td><td class="l">превращает ток в напряжение — выход</td></tr>
+    <tr><td>R4 2 кОм</td><td class="l">термостабилизация R<sub>э</sub></td><td class="l">задаёт и стабилизирует ток (ООС)</td><td class="l">зашунтирован C4</td></tr>
+    <tr><td>C4 100 нФ</td><td class="l">блокировочный (шунтирует R4)</td><td class="l">разрыв: R4 работает</td><td class="l">провод: эмиттер на земле, нет ООС</td></tr>
+    <tr><td>C3 1 мкФ</td><td class="l">разделительный выходной</td><td class="l">разрыв: 4,38 В не идут на выход</td><td class="l">провод: сигнал на выход</td></tr>
+    <tr><td>C5 10 нФ</td><td class="l">шунтирующий (ёмкость нагрузки)</td><td class="l">разрыв</td><td class="l">на высоких частотах закорачивает выход</td></tr>
+  </table></div>
+
+  <h4>Как идёт сигнал, по шагам</h4>
+  <ol>
+    <li>Генератор даёт синус 10 мВ, 10 кГц. Через C1 он <b>добавляется</b> к 4,84 В на базе: база качается 4,83…4,85 В.</li>
+    <li>Эмиттер сидит на земле по переменке (через C4), поэтому всё колебание приходится на переход Б–Э: U<sub>БЭ</sub> качается вокруг 0,65 В.</li>
+    <li>Ток коллектора (экспонента!) качается вокруг 2,1 мА.</li>
+    <li>Ток идёт через R3: по закону Ома качается падение на R3, а значит и <span class="f">U<sub>К</sub> = 10 − I<sub>К</sub>·R3</span>, причём <b>в обратную сторону</b>.</li>
+    <li>Через C3 на выход проходит только переменная часть: ≈ 73 мВ, <b>K ≈ 7,3</b> на 10 кГц, в противофазе.</li>
+  </ol>
+
+  <h4>Почему именно ОЭ</h4>
+  <p>Схема ОЭ усиливает <b>и ток</b> (вход — ток базы, выход — ток коллектора, ×β), <b>и напряжение</b> (×K). Поэтому у неё наибольшее усиление <b>по мощности</b>. Плата за это — инверсия фазы на 180°.</p>
+
+  <h4>Приборы, кто куда подключён</h4>
+  <ul>
+    <li><b>XFG1</b> (функциональный генератор): Sine, 10 кГц, амплитуда 10 мВ, без смещения. Это вход.</li>
+    <li><b>XSC1</b> (осциллограф): канал A — выход (после C3), канал B — вход. Смотрим форму и противофазу.</li>
+    <li><b>XBP1</b> (плоттер Боде): IN+ — вход, OUT+ — выход, минусы на землю. Сам качает частоту и рисует <b>K = OUT/IN</b> в дБ. Это и есть АЧХ.</li>
+    <li><b>XMM1, XMM2</b> (мультиметры, режим AC V): действующие значения выхода и входа.</li>
+  </ul>
+  <div class="box say"><b>Сказать на защите:</b> «R1–R2 — делитель смещения, задают рабочую точку. C1 и C3 разделительные: пропускают сигнал, не пропускают постоянку. R3 — коллекторная нагрузка, на ней получается выходное напряжение. R4 — термостабилизация, отрицательная обратная связь по постоянному току. C4 шунтирует R4 для переменного сигнала, чтобы не терять усиление. C5 ограничивает полосу сверху».</div>
+</div>
+</section>
+
+<!-- ======================= 3. ACH ======================= -->
+<section id="t-ach" hidden>
+<div class="grid">
+<div>
+<div class="card">
+  <h3>АЧХ — коэффициент усиления от частоты (наводи мышь)</h3>
+  <div class="row" id="achSets">
+    <button class="btn small" data-s="base" aria-pressed="true">Базовая (табл. 3.1)</button>
+    <button class="btn small" data-s="c1">C1 (табл. 3.2)</button>
+    <button class="btn small" data-s="c3">C3 (табл. 3.3)</button>
+    <button class="btn small" data-s="c4">C4 (табл. 3.4)</button>
+  </div>
+  <svg id="achSvg" viewBox="0 0 640 320"></svg>
+  <div class="readout" id="achRead">Наведи на график — покажу K на этой частоте.</div>
+  <div class="legend" id="achLeg"></div>
+</div>
+<div class="card">
+  <h3>Сопротивление конденсаторов X<sub>C</sub> = 1/(2πfC) — двигай частоту</h3>
+  <div class="ctrl">
+    <label for="fx">частота f</label>
+    <input id="fx" type="range" min="2" max="5" step="0.01" value="4">
+    <output id="fxO"></output>
+  </div>
+  <div class="scroll"><table id="xcTab"></table></div>
+  <p class="hint">Правило: конденсатор — «провод», если его X<sub>C</sub> много меньше сопротивления, с которым он работает в паре, и «разрыв», если много больше.</p>
+</div>
+</div>
+<div class="card">
+  <h3 id="achTitle"></h3>
+  <div id="achText" class="k" style="font-size:15px"></div>
+</div>
+</div>
+<div class="card k">
+  <h2>Конспект: АЧХ, децибелы, полоса</h2>
+  <h4>Что такое АЧХ</h4>
+  <p><b>Коэффициент усиления</b> <span class="f">K = U<sub>вых</sub> / U<sub>вх</sub></span> — во сколько раз выход больше входа. Он <b>зависит от частоты</b>, потому что в схеме есть конденсаторы, а их сопротивление зависит от частоты. График K(f) — это <b>амплитудно-частотная характеристика (АЧХ)</b>. Плоттер Боде строит её сам: качает частоту генератора и делит OUT на IN.</p>
+  <h4>Децибелы — зачем и как</h4>
+  <p><span class="f">K<sub>дБ</sub> = 20·lg K</span>. Логарифм превращает умножение в сложение и сжимает большие диапазоны. Запомни опорные точки:</p>
+  <div class="scroll"><table style="max-width:560px">
+    <tr><th>K (раз)</th><td>0,1</td><td>0,5</td><td>0,707</td><td>1</td><td>2</td><td>3,16</td><td>9,12</td><td>10</td><td>100</td></tr>
+    <tr><th>K, дБ</th><td>−20</td><td>−6</td><td>−3</td><td>0</td><td>+6</td><td>+10</td><td>+19,2</td><td>+20</td><td>+40</td></tr>
+  </table></div>
+  <p>Отрицательные дБ = K &lt; 1, выход <b>меньше</b> входа (на 100 Гц у нас −5,4 дБ, то есть 0,53).</p>
+  <h4>Полоса пропускания и почему 0,707</h4>
+  <p>Полоса — частоты, где K не ниже <b>0,707·K<sub>max</sub></b> (на 3 дБ ниже максимума). 0,707 = 1/√2: напряжение меньше в √2 раз, значит <b>мощность</b> меньше <b>в 2 раза</b>. Это граница «половинной мощности». Граничные частоты: нижняя <b>f<sub>н</sub></b> и верхняя <b>f<sub>в</sub></b>.</p>
+  <p>У нас: K<sub>max</sub> = 9,12 → уровень 6,45 (16,2 дБ) → <b>f<sub>н</sub> ≈ 7,7 кГц, f<sub>в</sub> ≈ 144 кГц</b>.</p>
+  <h4>Три области АЧХ — кто виноват</h4>
+  <div class="scroll"><table>
+    <tr><th>Область</th><th class="l">Что происходит</th><th class="l">Виноваты</th></tr>
+    <tr><td>Низкие частоты (слева)</td><td class="l">K падает</td><td class="l">X<sub>C</sub> разделительных (C1, C3) и блокировочного (C4) <b>растёт</b>: C1, C3 перестают пропускать сигнал, C4 перестаёт шунтировать R4. У нас главный — <b>C4</b></td></tr>
+    <tr><td>Средние</td><td class="l">K максимален и почти ровный</td><td class="l">все большие конденсаторы — «провода», маленькие (C5, ёмкости транзистора) — ещё «разрывы»</td></tr>
+    <tr><td>Высокие (справа)</td><td class="l">K падает</td><td class="l">X<sub>C</sub> <b>шунтирующего</b> C5 и ёмкостей переходов транзистора <b>уменьшается</b> — они закорачивают сигнал на землю</td></tr>
+  </table></div>
+  <h4>Фаза (столбец φ в табл. 3.1)</h4>
+  <p>Каскад ОЭ сам по себе даёт 180°. В середине полосы φ ≈ ±170…180°. По краям конденсаторы добавляют свой сдвиг, поэтому на 100 Гц −141°, на 100 кГц +147°. «Минус» и «плюс» 180° — одно и то же (полный оборот 360°).</p>
+  <div class="box say"><b>Сказать на защите:</b> «Kmax = 9,12, то есть 19,2 дБ, на 33 кГц. Полоса по уровню 0,707 от максимума — от 7,7 до 144 кГц. Снизу спад дают конденсаторы, в основном блокировочный C4. Сверху — шунтирующий C5 и ёмкости транзистора».</div>
+</div>
+</section>
+
+<!-- ======================= 4. R4 ======================= -->
+<section id="t-r4" hidden>
+<div class="grid">
+<div>
+<div class="card">
+  <h3>Меняем R4 (C4 = 100 нФ) — табл. 3.6</h3>
+  <div class="ctrl">
+    <label for="r4s">R4</label>
+    <input id="r4s" type="range" min="0" max="5" step="1" value="2">
+    <output id="r4O"></output>
+  </div>
+  <svg id="r4Svg" viewBox="0 0 640 300"></svg>
+  <p class="hint">Столбики — потенциалы выводов («высота» над землёй). Зазор между коллектором и эмиттером = U<sub>КЭ</sub>. Зазора нет — насыщение.</p>
+</div>
+<div class="card"><div class="scroll"><table id="r4Tab"></table></div></div>
+</div>
+<div>
+<div class="card">
+  <h3>Сейчас</h3>
+  <div id="r4Mode" class="big" style="font-size:19px"></div>
+  <p id="r4Text" style="font-size:15px"></p>
+</div>
+<div class="card">
+  <h3>Термостабилизация — нажимай «шаг»</h3>
+  <ol class="steps" id="tsSteps">
+    <li>Транзистор нагрелся. Растёт обратный ток I<sub>КБО</sub>, растёт β, нужное U<sub>БЭ</sub> падает ~2 мВ/°C. Итог: <b>I<sub>К</sub> растёт</b>.</li>
+    <li>I<sub>Э</sub> ≈ I<sub>К</sub> тоже растёт, поэтому <b>U<sub>Э</sub> = I<sub>Э</sub>·R4 растёт</b>.</li>
+    <li>U<sub>Б</sub> держит делитель R1–R2 (почти постоянно), значит <b>U<sub>БЭ</sub> = U<sub>Б</sub> − U<sub>Э</sub> уменьшается</b>.</li>
+    <li>Транзистор <b>подзакрывается</b>: I<sub>Б</sub> и I<sub>К</sub> <b>уменьшаются</b>.</li>
+    <li>Ток вернулся почти к исходному. Это <b>отрицательная обратная связь по постоянному току</b>: датчик — R4, «регулятор» — переход Б–Э.</li>
+  </ol>
+  <div class="row"><button class="btn small" id="tsNext">шаг</button><button class="btn small" id="tsReset">сначала</button></div>
+</div>
+</div>
+</div>
+<div class="card k">
+  <h2>Конспект: обратная связь, R4 и рабочая точка</h2>
+  <h4>Что такое обратная связь (ОС)</h4>
+  <p>Часть выходной величины подаётся обратно на вход. <b>Отрицательная</b> (ООС), если она <b>мешает</b> изменению: ток пытается вырасти, а ОС его тормозит. Так устроен любой регулятор (термостат, круиз-контроль). В цели работы это названо «малая система автоматического регулирования».</p>
+  <h4>Как ООС устроена здесь</h4>
+  <p>Ток эмиттера сам создаёт на R4 напряжение U<sub>Э</sub>, а оно <b>вычитается</b> из напряжения базы: <span class="f">U<sub>БЭ</sub> = U<sub>Б</sub> − I<sub>Э</sub>·R4</span>. Ток растёт → U<sub>БЭ</sub> падает → ток назад. Цепочка по шагам — в карточке «термостабилизация» выше.</p>
+  <p>Без R4 (эмиттер прямо на земле) U<sub>БЭ</sub> = U<sub>Б</sub> фиксировано, и транзистор при нагреве «разгоняется»: ток растёт, греется сильнее, ток ещё растёт. Так рабочая точка уезжает в насыщение. Это <b>температурная нестабильность</b>. R4 ещё и сглаживает разброс β от экземпляра к экземпляру.</p>
+  <h4>Зачем тогда C4 — ООС по постоянному и по переменному</h4>
+  <p>Та же ООС действовала бы и на сигнал: вход +10 мВ, эмиттер тоже поднимается почти на 10 мВ, U<sub>БЭ</sub> почти не меняется, усиления нет (K ≈ R3/R4 ≈ 1,35, у нас вообще 0,4–0,6). C4 закорачивает R4 <b>только для переменного</b>:</p>
+  <ul><li>для постоянного тока ООС есть → рабочая точка стабильна;</li><li>для сигнала ООС нет → K большой.</li></ul>
+  <p>Цепочка <b>R4–C4</b> называется <b>цепочкой автоматического смещения</b>.</p>
+  <h4>Расчёт рабочей точки (вопрос 9)</h4>
+  <ol>
+    <li><span class="f">U<sub>Б</sub> = E<sub>п</sub>·R2/(R1+R2) = 10·20/40 = 5 В</span>, реально 4,84 В (часть тока делителя уходит в базу).</li>
+    <li><span class="f">U<sub>Э</sub> = U<sub>Б</sub> − 0,65 = 4,20 В</span></li>
+    <li><span class="f">I<sub>Э</sub> = U<sub>Э</sub>/R4 = 4,20/2000 = 2,10 мА ≈ I<sub>К</sub></span></li>
+    <li><span class="f">U<sub>К</sub> = E<sub>п</sub> − I<sub>К</sub>·R3 = 10 − 2,1·2,7 ≈ 4,38 В</span></li>
+    <li><span class="f">U<sub>КЭ</sub> = U<sub>К</sub> − U<sub>Э</sub> = 0,18 В</span> → <b>граница насыщения</b></li>
+  </ol>
+  <h4>Почему рабочая точка должна быть «посередине»</h4>
+  <p>Выход (коллектор) может качаться <b>вверх</b> до +10 В и <b>вниз</b> только до U<sub>Э</sub> + ~0,2 В (дальше насыщение). У нас U<sub>К</sub> = 4,38, а U<sub>Э</sub> = 4,20: <b>вниз места почти нет</b>. Поэтому отрицательная полуволна выхода подрезается (+75 / −71 мВ), а при большом K искажения сильные (+544 / −452 мВ). Хорошая рабочая точка — U<sub>КЭ</sub> заметно больше нуля, примерно E<sub>п</sub>/2 по коллектору (у нас это R4 = 3…5 кОм).</p>
+  <h4>Практическое применение (просят в методичке)</h4>
+  <ul>
+    <li>Подбором R4 <b>устанавливают рабочую точку</b> и делают её <b>стабильной</b> по температуре и при замене транзистора.</li>
+    <li><b>Регулировка усиления</b>: R4 разбивают на две части и шунтируют конденсатором только одну. Незашунтированная часть даёт управляемую ООС: <span class="f">K ≈ R<sub>к</sub>/R<sub>э,незашунт</sub></span> (контрольный вопрос 5).</li>
+  </ul>
+  <div class="box say"><b>Сказать на защите:</b> «R4 задаёт ток коллектора и стабилизирует его отрицательной обратной связью по постоянному току: нагрев, ток растёт, растёт падение на R4, уменьшается U_БЭ, транзистор подзакрывается. При малых R4 транзистор в насыщении и не усиливает, при R4 от 3 кОм — активный режим. Усиление на средних частотах от R4 почти не зависит, потому что для сигнала R4 зашунтирован C4».</div>
+</div>
+</section>
+
+<!-- ======================= 5. RES ======================= -->
+<section id="t-res" hidden>
+<div class="card">
+  <h3>Рис. 2.2 (рис. 4 методички) — резонансный усилитель. Кликни на деталь</h3>
+  <div class="row" id="resModes">
+    <button class="btn small" data-m="all" aria-pressed="true">Вся схема</button>
+    <button class="btn small" data-m="dc">Постоянный ток</button>
+    <button class="btn small" data-m="ac">Переменный сигнал</button>
+  </div>
+  <svg id="resSvgSch" viewBox="0 0 960 580" aria-label="Схема резонансного усилителя"></svg>
+  <div class="legend" id="resLegend"></div>
+</div>
+<div class="grid">
+<div class="card">
+  <h3>Объяснение слоя</h3>
+  <div id="resModeB" class="k"></div>
+</div>
+<div class="card">
+  <h3 id="resInfoT">Деталь</h3>
+  <div id="resInfoB" style="font-size:15px"></div>
+</div>
+</div>
+<div class="grid">
+<div class="card">
+  <h3>АЧХ: точки табл. 3.7 + кривая по формуле контура</h3>
+  <svg id="resSvg" viewBox="0 0 640 320"></svg>
+  <div class="readout" id="resRead">Наведи на график.</div>
+  <div class="legend"><span><i style="border-color:var(--cc);border-top-style:solid"></i>модель/Multisim (табл. 3.7)</span><span><i style="border-color:var(--cb);border-top-style:solid"></i>формула контура с параметрами калькулятора</span></div>
+</div>
+<div class="card">
+  <h3>Калькулятор контура — двигай и смотри полосу</h3>
+  <div class="ctrl">
+    <label for="lS">L</label><input id="lS" type="range" min="100" max="2000" step="10" value="700"><output id="lO"></output>
+    <label for="cS">C (C6 + C5 через C3)</label><input id="cS" type="range" min="20" max="400" step="0.1" value="109.1"><output id="cO"></output>
+    <label for="rS">R ‖ контуру</label><input id="rS" type="range" min="200" max="5000" step="10" value="1000"><output id="rO"></output>
+  </div>
+  <div class="kv" style="margin-top:10px">
+    <span>f<sub>0</sub> = 1/(2π√(LC))</span><b id="rf0"></b>
+    <span>ρ = √(L/C)</span><b id="rrho"></b>
+    <span>Q = R/ρ</span><b id="rq"></b>
+    <span>Δf = f<sub>0</sub>/Q</span><b id="rdf"></b>
+  </div>
+  <div class="row"><button class="btn small" id="resReset">как в лабе</button><button class="btn small" id="resWide">шире полосу (вопрос 4): R = 330 Ом</button></div>
+  <div class="scroll"><table>
+    <tr><th></th><th>по графику</th><th class="l">теория</th></tr>
+    <tr><td>f<sub>0</sub>, кГц</td><td>18,24</td><td class="l">18,21 (с C5); 19,02 (только C6)</td></tr>
+    <tr><td>полоса, кГц</td><td>17,54…19,02 → Δf = 1,47</td><td class="l">1,46</td></tr>
+    <tr><td>Q</td><td>12,4</td><td class="l">12,5</td></tr>
+    <tr><td>K<sub>max</sub></td><td>9,79 (19,8 дБ)</td><td class="l">—</td></tr>
+  </table></div>
+</div>
+</div>
+<div class="card k">
+  <h2>Конспект: колебательный контур и резонансный усилитель</h2>
+  <h4>Чем отличается от резистивного</h4>
+  <p>Схема та же, но вместо R3 в коллектор поставлен <b>параллельный колебательный контур</b>: катушка L2 = 700 мкГн, конденсатор C6 = 100 нФ и резистор R3 = 1 кОм, все три параллельно. Ещё изменены C1 = 10 нФ, C3 = 100 нФ, R4 = 1 кОм.</p>
+  <h4>Катушка и конденсатор — противоположности</h4>
+  <div class="scroll"><table style="max-width:640px">
+    <tr><th></th><th class="l">Сопротивление</th><th class="l">На низких частотах</th><th class="l">На высоких</th></tr>
+    <tr><td>Катушка L</td><td class="l"><span class="f">X<sub>L</sub> = 2πfL</span></td><td class="l">≈ провод</td><td class="l">≈ разрыв</td></tr>
+    <tr><td>Конденсатор C</td><td class="l"><span class="f">X<sub>C</sub> = 1/(2πfC)</span></td><td class="l">≈ разрыв</td><td class="l">≈ провод</td></tr>
+  </table></div>
+  <p>В параллельном контуре ниже резонанса всё закорачивает <b>катушка</b>, выше — <b>конденсатор</b>. Сопротивление контура в обоих случаях маленькое.</p>
+  <h4>Резонанс</h4>
+  <p>Есть одна частота, где <span class="f">X<sub>L</sub> = X<sub>C</sub></span>. Токи в L и C там равны и <b>противоположны по фазе</b>, снаружи они взаимно гасятся. Энергия качается внутри: конденсатор разряжается в катушку, катушка заряжает конденсатор. Снаружи контур выглядит как <b>большое сопротивление</b> (у нас его ограничивает R3 ≈ 1 кОм). Частота резонанса (формула Томсона):</p>
+  <p><span class="f">f<sub>0</sub> = 1 / (2π·√(L·C))</span></p>
+  <p>Только C6: 1/(2π·√(700 мкГн · 100 нФ)) = <b>19,02 кГц</b>. Но параллельно контуру через C3 (100 нФ) висит C5 (10 нФ). Последовательно это 100·10/110 = 9,09 нФ, и всего C = 109,1 нФ → <b>18,21 кГц</b>. По графику <b>18,24 кГц</b>, совпало.</p>
+  <h4>Почему усилитель «выбирает» частоту</h4>
+  <p>Усиление каскада ОЭ ≈ <b>крутизна транзистора × сопротивление нагрузки</b> (<span class="f">K ≈ S·Z<sub>н</sub></span>). У резистора Z<sub>н</sub> = R3 на всех частотах, поэтому K ровный. У контура Z<sub>н</sub> большое только около f<sub>0</sub>, значит и K большой только там: K<sub>max</sub> = 9,79. На 5 кГц K = 0,06, на 50 кГц — 0,89. Это <b>избирательный</b> (селективный) усилитель.</p>
+  <h4>Добротность и полоса</h4>
+  <ul>
+    <li><b>Характеристическое сопротивление</b> <span class="f">ρ = √(L/C)</span> — это X<sub>L</sub> = X<sub>C</sub> на резонансе: √(700·10⁻⁶ / 109,1·10⁻⁹) ≈ <b>80 Ом</b>.</li>
+    <li><b>Добротность</b> <span class="f">Q = R/ρ</span> = 1000/80 ≈ <b>12,5</b>: насколько «острый» резонанс. Чем больше Q, тем острее пик.</li>
+    <li><b>Полоса</b> <span class="f">Δf = f<sub>0</sub>/Q</span> = 18,21/12,5 ≈ <b>1,46 кГц</b>. По графику 17,54…19,02 → 1,47 кГц.</li>
+  </ul>
+  <p>Q по графику чуть ниже (12,4): параллельно контуру, кроме R3, подключено ещё выходное сопротивление транзистора, оно «подгружает» контур.</p>
+  <p><b>Как расширить полосу (вопрос 4):</b> уменьшить Q, то есть поставить параллельно контуру резистор поменьше (кнопка «R = 330 Ом»: Δf ≈ 4,4 кГц, но и K меньше) или увеличить ρ (больше L, меньше C при той же f<sub>0</sub>).</p>
+  <h4>Фаза на резонансе</h4>
+  <p>На f<sub>0</sub> контур чисто активный (как резистор), поэтому сам каскад даёт 180°. В таблице −97° на 18,25 кГц: к 180° добавляется опережение входной цепочки C1–R1–R2 (C1 всего 10 нФ) и цепочки C4–R4. По краям пика фаза быстро меняется: катушка и конденсатор сдвигают в разные стороны.</p>
+  <h4>Постоянный ток</h4>
+  <p>Через катушку постоянный ток проходит почти без падения (сопротивление провода ≈ 0), поэтому <b>U<sub>К</sub> = 10 В</b>. Это нормальный <b>активный режим</b> (U<sub>КЭ</sub> ≈ 5,85 В), в отличие от резистивного каскада.</p>
+  <div class="box say"><b>Сказать на защите:</b> «В коллекторе параллельный контур L2–C6–R3. На резонансной частоте его сопротивление максимально, поэтому усиление максимально. f0 по формуле Томсона с учётом C5 — 18,21 кГц, по графику 18,24. Полоса 1,47 кГц, добротность около 12. Резистивный усилитель — широкополосный, для речи и звука; резонансный — избирательный, для выделения одной частоты, например в радио- и телеприёмнике».</div>
+</div>
+</section>
+
+<!-- ======================= 6. QUESTIONS ======================= -->
+<section id="t-q" hidden>
+<div class="grid">
+<div class="card">
+  <h3>Контрольные вопросы методички (стр. 70–71) — сначала ответь вслух, потом открой</h3>
+  <div id="qList"></div>
+</div>
+<div>
+<div class="card k">
+  <h3>5 главных фраз (говорить быстро)</h3>
+  <ol>
+    <li><b>Каскад ОЭ:</b> малый ток базы управляет большим током коллектора, ток через R3 становится напряжением, выход перевёрнут на 180°.</li>
+    <li><b>Рабочая точка:</b> делитель даёт 4,84 В на базу, минус 0,65 — 4,2 В на эмиттере, ток 4,2/2к = 2,1 мА, на R3 падает 5,6 В, U<sub>КЭ</sub> = 0,18 В — граница насыщения, отсюда K всего 9.</li>
+    <li><b>Конденсаторы:</b> X<sub>C</sub> = 1/(2πfC). C1, C3 разделительные, C4 блокировочный (убирает R4 для сигнала), C5 режет верх. Меньше ёмкость — больше X<sub>C</sub> на низких — АЧХ проваливается слева.</li>
+    <li><b>R4:</b> задаёт ток и стабилизирует его ООС по постоянному току: нагрев, I растёт, U<sub>Э</sub> растёт, U<sub>БЭ</sub> падает, I назад. Малый R4 — насыщение, R4 ≥ 3 кОм — активный.</li>
+    <li><b>Резонансный:</b> контур LC в коллекторе, на f<sub>0</sub> = 1/(2π√LC) ≈ 18,2 кГц сопротивление максимально, усиление максимально. Q = R/ρ ≈ 12, Δf = f<sub>0</sub>/Q ≈ 1,5 кГц. Резистивный — для широкой полосы (речь), резонансный — для одной частоты (радио/ТВ).</li>
+  </ol>
+</div>
+<div class="card">
+  <h3>Вероятные вопросы {{TEACHER_CIRCUITS_GEN}}</h3>
+  <div id="qList2"></div>
+</div>
+</div>
+</div>
+</section>
+</div>
+
+<script>
+// ---------- общие ----------
+const $ = s => document.querySelector(s);
+const $$ = s => [...document.querySelectorAll(s)];
+const ns = 'http://www.w3.org/2000/svg';
+const fmt = (x, d=2) => x.toLocaleString('ru-RU', {maximumFractionDigits:d, minimumFractionDigits:0});
+function fmtI(a){ if(a<1e-6) return fmt(a*1e9,1)+' нА'; if(a<1e-3) return fmt(a*1e6,1)+' мкА'; return fmt(a*1e3,2)+' мА'; }
+function fmtR(r){ if(r>=1e6) return fmt(r/1e6,2)+' МОм'; if(r>=1e3) return fmt(r/1e3,2)+' кОм'; return fmt(r,1)+' Ом'; }
+function fmtF(f){ return f>=1000 ? fmt(f/1000,2)+' кГц' : fmt(f,0)+' Гц'; }
+const sub = t => `<tspan baseline-shift="sub" font-size="75%">${t}</tspan>`;
+
+$('#themeBtn').onclick = () => {
+  const r = document.documentElement;
+  const dark = r.dataset.theme ? r.dataset.theme==='dark' : matchMedia('(prefers-color-scheme: dark)').matches;
+  r.dataset.theme = dark ? 'light' : 'dark';
+};
+$$('#tabs button').forEach(b => b.onclick = () => {
+  $$('#tabs button').forEach(x => x.setAttribute('aria-pressed', x===b));
+  $$('section').forEach(s => s.hidden = s.id !== 't-'+b.dataset.t);
+  try{ localStorage.setItem('lr7tab', b.dataset.t); }catch(e){}
+});
+try{ const t = localStorage.getItem('lr7tab'); if(t){ const b=$(`#tabs button[data-t="${t}"]`); b && b.click(); } }catch(e){}
+
+// ---------- 1. NPN ----------
+const npn = {ube:0.65, uce:10, parts:[], acc:0};
+const NX0=40, NE=300, NB=360, NX1=680, NY0=50, NY1=210;
+function npnStatic(){
+  $('#npnSvg').innerHTML = `
+  <rect x="${NX0}" y="${NY0}" width="${NE-NX0}" height="${NY1-NY0}" fill="var(--n)"/>
+  <rect x="${NE}" y="${NY0}" width="${NB-NE}" height="${NY1-NY0}" fill="var(--p)"/>
+  <rect x="${NB}" y="${NY0}" width="${NX1-NB}" height="${NY1-NY0}" fill="var(--n)"/>
+  <rect id="depE" y="${NY0}" height="${NY1-NY0}" fill="var(--muted)" opacity=".35"/>
+  <rect id="depC" y="${NY0}" height="${NY1-NY0}" fill="var(--muted)" opacity=".35"/>
+  <rect x="${NX0}" y="${NY0}" width="${NX1-NX0}" height="${NY1-NY0}" fill="none" stroke="var(--wire)" stroke-width="1.5"/>
+  <text class="lbl b" x="${(NX0+NE)/2}" y="38" text-anchor="middle">ЭМИТТЕР (n+) — много электронов</text>
+  <text class="lbl b" x="${(NE+NB)/2}" y="38" text-anchor="middle">БАЗА (p)</text>
+  <text class="lbl b" x="${(NB+NX1)/2}" y="38" text-anchor="middle">КОЛЛЕКТОР (n)</text>
+  <text class="lbl m" x="${NE-6}" y="228" text-anchor="end">эмиттерный переход ↑</text>
+  <text class="lbl m" x="${NB+6}" y="228">↑ коллекторный переход</text>
+  <path class="w" d="M${NX0},130 H14 V280"/><text class="lbl b" x="22" y="292">Э</text>
+  <path class="w" d="M${(NE+NB)/2},${NY1} V280"/><text class="lbl b" x="${(NE+NB)/2+8}" y="292">Б</text>
+  <path class="w" d="M${NX1},130 H706 V280"/><text class="lbl b" x="688" y="292">К</text>
+  <text id="tUbe" class="tag" x="120" y="270" fill="var(--cb)"></text>
+  <text id="tUce" class="tag" x="450" y="270" fill="var(--cc)"></text>
+  <g id="holes"></g><g id="el"></g>`;
+  const h = $('#holes');
+  for(let i=0;i<7;i++){ const c=document.createElementNS(ns,'circle'); c.setAttribute('cx', NE+14+(i%2)*32); c.setAttribute('cy', 66+i*21); c.setAttribute('r',4); c.setAttribute('fill','none'); c.setAttribute('stroke','var(--bad)'); c.setAttribute('stroke-width','1.6'); h.appendChild(c); }
+}
+function npnCalc(){
+  const Is=1e-14, Vt=0.02585, beta=100;
+  let ic = Is*Math.exp(npn.ube/Vt);
+  const sat = npn.uce < 0.3;
+  if(sat) ic = Math.min(ic, 2.1e-3);
+  ic = Math.min(ic, 30e-3);
+  const ib = sat ? ic/10 : ic/beta;
+  return {ic, ib, sat, open: npn.ube>0.5};
+}
+function npnUpdate(){
+  const {ic, ib, sat, open} = npnCalc();
+  $('#ubeO').textContent = fmt(npn.ube,3)+' В';
+  $('#tUbe').textContent = 'U_БЭ = '+fmt(npn.ube,2)+' В (плюс на базу)';
+  $('#tUce').textContent = sat ? 'U_КЭ = 0,1 В' : 'U_КЭ большое (плюс на коллектор)';
+  const we = Math.max(4, 26 - npn.ube*30), wc = sat ? 6 : 34;
+  const dE=$('#depE'); dE.setAttribute('x', NE-we/2); dE.setAttribute('width', we);
+  const dC=$('#depC'); dC.setAttribute('x', NB-wc/3); dC.setAttribute('width', wc);
+  $('#npnIc').textContent = open ? fmtI(ic) : '≈ 0';
+  $('#npnIb').textContent = open ? fmtI(ib) + (sat?' (в насыщении базе достаётся больше)':' = I_К/100') : '≈ 0';
+  $('#npnJe').innerHTML = open ? '<span class="ok">открыт (прямое смещение)</span>' : '<span class="bad">закрыт</span>';
+  $('#npnJc').innerHTML = sat ? '<span class="amb">тоже открыт</span>' : '<span class="ok">закрыт (обратное смещение)</span>';
+  let mode, txt;
+  if(!open){ mode='<span class="bad">Отсечка</span>'; txt='U_БЭ меньше ~0,5 В — барьер эмиттерного перехода не пройти, электроны сидят в эмиттере. Тока нет. Поэтому на базу и подают смещение от делителя R1–R2: без него транзистор закрыт, и сигнал 10 мВ его не откроет. Сдвинь ползунок к 0,65 В.'; }
+  else if(sat){ mode='<span class="amb">Насыщение</span>'; txt='U_КЭ ≈ 0,1 В: коллектор почти не выше базы, коллекторный переход тоже открыт. Поле больше не «тянет» электроны в коллектор, они копятся в базе, ток ограничен внешним резистором R3, а не базой. Добавляешь ток базы — I_К почти не растёт → нет усиления. Наша схема (U_КЭ = 0,18 В) стоит на краю этого режима.'; }
+  else { mode='<span class="ok">Активный — усиливает</span>'; txt='Эмиттерный переход открыт, коллекторный закрыт. Каждые +18 мВ на U_БЭ примерно удваивают ток коллектора (экспонента). Подвигай ползунок на ±0,01 В вокруг 0,65 — это и есть наш входной сигнал 10 мВ: ток заметно меняется.'; }
+  $('#npnMode').innerHTML = mode; $('#npnText').textContent = txt;
+}
+function npnTick(){
+  const {ic, sat, open} = npnCalc();
+  const g = $('#el');
+  const rate = open ? Math.min(1.4, Math.max(0, (Math.log10(ic)+7)/3)) : 0;
+  npn.acc += rate;
+  while(npn.acc >= 1 && npn.parts.length < 160){
+    npn.acc -= 1;
+    const c = document.createElementNS(ns,'circle'); c.setAttribute('r',4); c.setAttribute('fill','var(--cb)'); g.appendChild(c);
+    npn.parts.push({x:NX0+10+Math.random()*30, y:NY0+12+Math.random()*(NY1-NY0-24), vx:2.2+Math.random(), down:Math.random()<(sat?0.35:0.04), el:c});
+  }
+  npn.parts = npn.parts.filter(p => {
+    if(p.down && p.x > (NE+NB)/2-4){ p.x += ((NE+NB)/2 - p.x)*0.2; p.y += 2.6; }
+    else p.x += p.vx;
+    p.el.setAttribute('cx', p.x); p.el.setAttribute('cy', p.y);
+    const out = p.x > NX1-6 || p.y > 278;
+    if(out) p.el.remove();
+    return !out;
+  });
+  requestAnimationFrame(npnTick);
+}
+npnStatic();
+$('#ube').oninput = e => { npn.ube = +e.target.value; npnUpdate(); };
+$$('[data-uce]').forEach(b => b.onclick = () => { $$('[data-uce]').forEach(x=>x.setAttribute('aria-pressed', x===b)); npn.uce=+b.dataset.uce; npnUpdate(); });
+npnUpdate(); requestAnimationFrame(npnTick);
+
+// ---------- СХЕМЫ (рис. 2.1 и рис. 2.2) ----------
+function resV(x,y1,y2,id,name,val,left){ const m=(y1+y2)/2, tx = left ? x-18 : x+18, an = left?'end':'start';
+  return `<g data-id="${id}"><path class="w" d="M${x},${y1} V${m-30} M${x},${m+30} V${y2}"/><rect class="rbox" x="${x-9}" y="${m-30}" width="18" height="60"/><text class="lbl b" x="${tx}" y="${m-4}" text-anchor="${an}">${name}</text><text class="lbl m" x="${tx}" y="${m+13}" text-anchor="${an}">${val}</text><rect class="hit" x="${left?x-95:x-22}" y="${m-36}" width="117" height="72"/></g>`; }
+function capV(x,y1,y2,id,name,val,left){ const m=(y1+y2)/2, tx = left ? x-22 : x+22, an = left?'end':'start';
+  return `<g data-id="${id}" class="cap"><path class="w" d="M${x},${y1} V${m-5} M${x},${m+5} V${y2}"/><path class="plate" d="M${x-16},${m-5} H${x+16} M${x-16},${m+5} H${x+16}"/><text class="lbl b" x="${tx}" y="${m-4}" text-anchor="${an}">${name}</text><text class="lbl m" x="${tx}" y="${m+13}" text-anchor="${an}">${val}</text><rect class="hit" x="${left?x-95:x-22}" y="${m-28}" width="117" height="56"/></g>`; }
+function capH(y,x1,x2,id,name,val){ const m=(x1+x2)/2;
+  return `<g data-id="${id}" class="cap"><path class="w" d="M${x1},${y} H${m-5} M${m+5},${y} H${x2}"/><path class="plate" d="M${m-5},${y-16} V${y+16} M${m+5},${y-16} V${y+16}"/><text class="lbl b" x="${m}" y="${y-24}" text-anchor="middle">${name}</text><text class="lbl m" x="${m}" y="${y+34}" text-anchor="middle">${val}</text><rect class="hit" x="${m-34}" y="${y-42}" width="68" height="84"/></g>`; }
+function indV(x,y1,y2,id,name,val){ const m=(y1+y2)/2, t=m-36; let d=`M${x},${t}`; for(let i=0;i<4;i++) d+=` q20,9 0,18`;
+  return `<g data-id="${id}"><path class="w" d="M${x},${y1} V${t} M${x},${t+72} V${y2}"/><path class="w" d="${d}"/><text class="lbl b" x="${x-14}" y="${m-4}" text-anchor="end">${name}</text><text class="lbl m" x="${x-14}" y="${m+13}" text-anchor="end">${val}</text><rect class="hit" x="${x-95}" y="${t-6}" width="120" height="84"/></g>`; }
+function gnd(x,y){ return `<path class="w" d="M${x},${y} v8 M${x-12},${y+8} h24 M${x-7},${y+13} h14 M${x-2},${y+18} h4"/>`; }
+function flag(x,y,t,c){ return `<g><rect x="${x-22}" y="${y-11}" width="44" height="22" rx="4" fill="var(--card)" stroke="${c}" stroke-width="1.8"/><text x="${x}" y="${y+5}" text-anchor="middle" class="tag" style="stroke:none" fill="${c}">${t}</text></g>`; }
+function dot(x,y){ return `<circle class="dot" cx="${x}" cy="${y}" r="3.5"/>`; }
+
+const SCH = {
+ base:{ vals:{C1:'1 мкФ',C3:'1 мкФ',R4:'2 кОм'},
+  flows:{dc:[['var(--cc)','M60,170 V70 H470 V380 V520'],['var(--cb)','M270,70 V520']],
+         ac:[['var(--cb)','M90,394 V300 H410'],['var(--cc)','M470,220 H940'],['var(--ce)','M470,380 H540 V520']]},
+  tags:{dc:[['+10 В',170,60,'cc'],['U'+sub('Б')+' = 4,84 В',282,290,'cb'],['I'+sub('К')+' = 2,1 мА ↓',480,206,'cc'],['U'+sub('К')+' = 4,38 В',482,246,'cc'],['U'+sub('Э')+' = 4,20 В',482,372,'ce'],['U'+sub('КЭ')+' = 0,18 В — граница насыщения!',300,560,'amber'],['разрыв',156,350,'muted'],['разрыв',560,270,'muted'],['разрыв',560,470,'muted']],
+        ac:[['+10 В ≈ земля для сигнала (C2)',170,60,'ok'],['~10 мВ',20,290,'cb'],['~73 мВ, фаза 180°',708,205,'cc'],['эмиттер ≈ земля (через C4)',482,372,'ce'],['на ВЧ закорачивает →',560,470,'muted']]},
+  legend:{dc:'<span><i style="border-color:var(--cc)"></i>ток коллектора: +10 В → R3 → К → Э → R4 → земля</span><span><i style="border-color:var(--cb)"></i>ток делителя R1–R2</span><span>пунктирные конденсаторы — разрыв</span>',
+          ac:'<span><i style="border-color:var(--cb)"></i>вход → C1 → база</span><span><i style="border-color:var(--cc)"></i>коллектор → C3 → выход</span><span><i style="border-color:var(--ce)"></i>эмиттер → C4 → земля</span><span class="ok">зелёные конденсаторы ≈ провод</span>'},
+  text:{
+   all:`<p>Это та же схема, что на твоём скрине Multisim (рис. 2.1), только разложена ровно. <b>Кликни на деталь</b> — справа будет её роль и что сказать. Потом переключи <b>«Слой 1»</b> и <b>«Слой 2»</b>: преподаватель любит спрашивать «что этот элемент делает для постоянного тока, а что для переменного».</p>
+        <p>Как читать: сверху шина <b>+10 В</b>, снизу <b>земля</b>. Посередине транзистор Q1: база слева, коллектор вверх, эмиттер (со стрелкой) вниз. Всё, что выше транзистора, — <b>коллекторная цепь</b>, ниже — <b>эмиттерная</b>, слева — <b>входная</b>, справа — <b>выходная</b>.</p>`,
+   dc:`<p><b>Слой 1: постоянный ток = рабочая точка.</b> Генератора будто нет, конденсаторы — разрывы. Остаются: V1, R1, R2, Q1, R3, R4.</p>
+       <ol><li>Делитель: <span class="f">U<sub>Б</sub> = 10·R2/(R1+R2) = 5 В</span>, реально <b>4,84 В</b> (часть тока делителя уходит в базу).</li>
+       <li><span class="f">U<sub>Э</sub> = U<sub>Б</sub> − 0,65 = 4,20 В</span> (на открытом переходе Б–Э ≈ 0,65 В).</li>
+       <li><span class="f">I<sub>Э</sub> = U<sub>Э</sub>/R4 = 4,2/2000 = 2,1 мА ≈ I<sub>К</sub></span></li>
+       <li><span class="f">U<sub>К</sub> = 10 − I<sub>К</sub>·R3 = 10 − 2,1·2,7 ≈ 4,38 В</span></li>
+       <li><span class="f">U<sub>КЭ</sub> = 4,38 − 4,20 = 0,18 В</span> → <b class="amb">граница насыщения</b>. Хорошо было бы несколько вольт, чтобы выход мог качаться в обе стороны.</li></ol>`,
+   ac:`<p><b>Слой 2: переменный сигнал.</b> Большие конденсаторы на частоте сигнала ≈ провода, батарейка и C2 ≈ земля.</p>
+       <ol><li>10 мВ через C1 добавляются к 4,84 В на базе.</li>
+       <li>Эмиттер через C4 сидит на земле, поэтому все 10 мВ качают переход Б–Э.</li>
+       <li>Ток коллектора качается вокруг 2,1 мА, на R3 качается напряжение.</li>
+       <li>Через C3 на выход: ≈ 73 мВ на 10 кГц, <b>K ≈ 7,3</b>, в противофазе.</li>
+       <li>C5 на высоких частотах закорачивает выход — спад АЧХ справа.</li></ol>`}
+ },
+ res:{ vals:{C1:'10 нФ',C3:'100 нФ',R4:'1 кОм'},
+  flows:{dc:[['var(--cc)','M60,170 V70 H400 V220 H470 V380 V520'],['var(--cb)','M270,70 V520']],
+         ac:[['var(--cb)','M90,394 V300 H410'],['var(--cc)','M470,220 H940'],['var(--ce)','M470,380 H540 V520']]},
+  tags:{dc:[['+10 В',170,60,'cc'],['U'+sub('Б')+' = 4,81 В',282,290,'cb'],['ток через L2 (≈ 0 Ом)',300,240,'cc'],['U'+sub('К')+' = 10 В',482,246,'cc'],['U'+sub('Э')+' = 4,15 В, I = 4,15 мА',482,372,'ce'],['U'+sub('КЭ')+' ≈ 5,85 В — активный режим',300,560,'ok']],
+        ac:[['+10 В ≈ земля для сигнала',170,60,'ok'],['~10 мВ',20,290,'cb'],['~98 мВ только около 18,2 кГц',650,205,'cc'],['эмиттер ≈ земля (через C4)',482,372,'ce']]},
+  legend:{dc:'<span><i style="border-color:var(--cc)"></i>ток коллектора: +10 В → L2 → К → Э → R4 → земля</span><span><i style="border-color:var(--cb)"></i>ток делителя</span>',
+          ac:'<span><i style="border-color:var(--cb)"></i>вход</span><span><i style="border-color:var(--cc)"></i>выход</span><span><i style="border-color:var(--ce)"></i>эмиттер на землю через C4</span><span>контур L2‖R3‖C6 — нагрузка, большая только на f₀</span>'},
+  text:{
+   all:`<p>Отличие от рис. 2.1 одно, но главное: вместо R3 в коллекторе стоит <b>параллельный контур L2 ‖ R3 ‖ C6</b>. Плюс поменяли C1 = 10 нФ, C3 = 100 нФ, R4 = 1 кОм. Кликни на L2, C6, R3.</p>`,
+   dc:`<p><b>Постоянный ток.</b> Катушка для постоянного тока — просто провод (≈ 0 Ом), поэтому на коллекторе все <b>10 В</b>. C6 — разрыв, R3 зашунтирован катушкой.</p>
+       <p>U<sub>Б</sub> = 4,81 В, U<sub>Э</sub> = 4,15 В, I = 4,15/1000 = 4,15 мА (R4 теперь 1 кОм, ток вдвое больше). <b>U<sub>КЭ</sub> = 10 − 4,15 ≈ 5,85 В — нормальный активный режим</b>, не насыщение.</p>`,
+   ac:`<p><b>Переменный сигнал.</b> Нагрузка коллектора — контур. Его сопротивление:</p>
+       <ul><li>ниже f<sub>0</sub> — маленькое (закорачивает катушка);</li><li>на f<sub>0</sub> ≈ 18,2 кГц — <b>максимальное</b> ≈ R3 = 1 кОм;</li><li>выше f<sub>0</sub> — маленькое (закорачивает C6).</li></ul>
+       <p>Поэтому K ≈ 9,8 только около 18,2 кГц, а на 5 кГц всего 0,06.</p>`}
+ }
+};
+const INFO = {
+  V1:['V1 — источник питания 10 В (E<sub>п</sub>)','<p>Даёт постоянный ток и <b>энергию</b>. Усилитель не создаёт мощность из ничего: он берёт её у V1 и отдаёт по форме входного сигнала. Длинная черта — плюс.</p><p>Для сигнала источник — почти короткое замыкание, поэтому шина +10 В по переменке ≈ земля.</p>'],
+  C2:['C2 = 10 нФ — блокировочный по питанию','<p>Между +10 В и землёй. Для постоянного — разрыв. Для переменного — замыкает шину питания на землю, гасит помехи и пульсации питания, чтобы они не попали в каскад.</p>'],
+  R1:['R1 = 20 кОм — верхнее плечо делителя','<p>R1 и R2 делят 10 В: <span class="f">U<sub>Б</sub> = 10·R2/(R1+R2) = 5 В</span> (реально 4,84). Это <b>напряжение смещения</b>: оно заранее приоткрывает транзистор (U<sub>БЭ</sub> ≈ 0,65 В), чтобы сигнал 10 мВ качал уже текущий ток. Без смещения транзистор закрыт, и 10 мВ его не откроют.</p><p>В методичке так и сказано: вместо отдельного источника смещения используют делитель.</p><p class="show">[показать] R1 идёт от +10 В к базе.</p>'],
+  R2:['R2 = 20 кОм — нижнее плечо делителя','<p>От базы на землю. Контрольный вопрос 9 «как рассчитывается смещение на базе» — формулой делителя: 10·20/(20+20) = 5 В без учёта тока базы. С током базы — чуть меньше (4,84).</p><p>Для сигнала R1 и R2 стоят параллельно (R1 по переменке на земле через V1): ≈ 10 кОм — входное сопротивление каскада (вместе со входом транзистора).</p>'],
+  C1:['C1 — разделительный входной','<p><b>Для постоянного</b> — разрыв: генератор (у него по постоянке 0 В) не «сажает» смещение 4,84 В на базе.</p><p><b>Для сигнала</b> — проводник, если X<sub>C</sub> мал по сравнению со входным сопротивлением (≈ 10 кОм).</p><p>C1 вместе со входным сопротивлением — <b>фильтр высоких частот</b> (как в ЛР-3). При C1 = 5 нФ: f<sub>н</sub> 7,7 → 41,8 кГц, K на 1 кГц 1,26 → 0,09 (табл. 3.2).</p>'],
+  Q1:['Q1 — транзистор 2N2222A, n-p-n','<p>Включён по схеме <b>ОЭ</b>: вход на базу, выход с коллектора, эмиттер общий (по переменке на земле через C4). Наибольшее усиление по мощности. Выход инвертирован (180°).</p><p>Выводы: <b>Б</b> — слева (к делителю и C1), <b>К</b> — вверх (к R3/контуру), <b>Э</b> — вниз со стрелкой наружу (к R4, C4). Стрелка наружу = n-p-n.</p><p class="show">[показать] в Multisim: двойной клик по Q1 → тип 2N2222A; Edit model — модель Q2N2222A.</p>'],
+  R3:['R3 = 2,7 кОм — нагрузка коллектора (R<sub>к</sub>)','<p>Ток коллектора, проходя через R3, превращается в напряжение: <span class="f">U<sub>К</sub> = E<sub>п</sub> − I<sub>К</sub>·R3</span>. Ток вырос — падение на R3 больше — на коллекторе меньше. Отсюда <b>инверсия</b>.</p><p>Нагрузка — резистор, поэтому усилитель <b>резистивный</b>, или <b>апериодический</b>: нет катушек, значит нет колебаний и резонансов.</p><p>Чем больше R<sub>к</sub>, тем больше K, но тем ниже опускается U<sub>К</sub>. При 2,7 кОм и 2,1 мА на R3 падает 5,6 В, и коллектор садится почти на эмиттер.</p>'],
+  C3:['C3 — разделительный выходной','<p>Пропускает на выход только переменную часть. Постоянные 4,38 В с коллектора на выход не проходят и нагрузку не трогают.</p><p>C3 и C5 образуют ёмкостный делитель: при C3 = 1 нФ на 10 кГц X<sub>C3</sub> ≈ 15,9 кОм против X<sub>C5</sub> ≈ 1,6 кОм, почти весь сигнал «падает» на C3, K<sub>max</sub> = 5,24 (табл. 3.3). C3 = 0,8 мкФ — разницы с 1 мкФ нет.</p>'],
+  C5:['C5 = 10 нФ — шунтирующий','<p>С выхода на землю. Изображает ёмкость нагрузки и монтажа. На высоких частотах его X<sub>C</sub> мал, он закорачивает выход, отсюда <b>спад АЧХ справа</b> (вместе с ёмкостями переходов транзистора). f<sub>в</sub> ≈ 144 кГц.</p><p>В резонансном каскаде C5 через C3 добавляется к ёмкости контура, поэтому f<sub>0</sub> 18,21, а не 19,02 кГц.</p>'],
+  R4:['R4 — резистор в цепи эмиттера (R<sub>э</sub>)','<p><b>Задаёт ток:</b> <span class="f">I<sub>Э</sub> ≈ (U<sub>Б</sub> − 0,65)/R4</span>, при 2 кОм это 2,1 мА.</p><p><b>Стабилизирует его</b> — температурная стабилизация, ООС по постоянному току: нагрев → ток ↑ → U<sub>Э</sub> ↑ → U<sub>БЭ</sub> ↓ → ток ↓ (вкладка 4).</p><p>Малый R4 → большой ток → насыщение. R4 ≥ 3 кОм → активный режим (табл. 3.6).</p>'],
+  C4:['C4 — блокировочный (шунтирует R4)','<p><b>Для постоянного</b> — разрыв: R4 работает, рабочая точка стабильна.</p><p><b>Для сигнала</b> — провод: эмиттер на земле, ООС на сигнал нет, K большой.</p><p>R4 + C4 = <b>цепочка автоматического смещения</b>.</p><p>Без C4 K ≈ 0,4–0,6 (меньше 1!). При C4 = 10 мкФ K = 99 на 10 кГц, но форма искажена (Kг 11 %). В методичке C4 в одном месте назван «разделительным» — по роли он <b>блокировочный</b>.</p>'],
+  XFG1:['XFG1 — функциональный генератор','<p>Источник входного сигнала: Sine, 10 кГц, амплитуда 10 мВ (Vp), Offset 0. 10 мВ — чтобы остаться в линейном режиме (методичка: не более 0,1 В).</p><p class="show">[показать] двойной клик: окно с формой, частотой, амплитудой.</p>'],
+  XSC1:['XSC1 — осциллограф','<p>Канал A — выход (после C3), канал B — вход (генератор). Timebase 20 мкс/дел (2 периода 10 кГц на экран), A 50 мВ/дел, B 5 мВ/дел.</p><p>Что видно: выход ≈ 73 мВ против 10 мВ входа и <b>в противофазе</b> (пик входа = провал выхода). Рис. 3.3, а при C4 = 1 мкФ — рис. 3.9 с искажением.</p>'],
+  XBP1:['XBP1 — плоттер Боде','<p>Строит АЧХ: IN+ — на вход схемы, OUT+ — на выход, «−» на землю. Сам перебирает частоты и рисует 20·lg(OUT/IN). Настройки: Magnitude, Horizontal Log 10 Гц…200 кГц, Vertical Log −40…30 дБ.</p><p class="show">[показать] тащишь курсор, внизу частота и дБ: 33,8 кГц → 19,2 дБ.</p>'],
+  XMM:['XMM1, XMM2 — мультиметры','<p>Режим AC V: показывают действующее (среднеквадратичное) значение выхода (XMM1) и входа (XMM2). Действующее = амплитуда/√2.</p>'],
+  L2:['L2 = 700 мкГн — катушка контура','<p><span class="f">X<sub>L</sub> = 2πfL</span>: на низких частотах мало (закорачивает контур), на высоких много. Для постоянного тока — провод, через неё идёт ток коллектора, поэтому U<sub>К</sub> = 10 В.</p><p>На f<sub>0</sub> X<sub>L</sub> = X<sub>C</sub> = ρ ≈ 80 Ом.</p>'],
+  C6:['C6 = 100 нФ — конденсатор контура','<p><span class="f">X<sub>C</sub> = 1/(2πfC)</span>: на высоких частотах мало (закорачивает контур). Вместе с L2 задаёт f<sub>0</sub> = 1/(2π√LC). С учётом C5 через C3 общая C = 109,1 нФ → 18,21 кГц.</p>'],
+  R3r:['R3 = 1 кОм — резистор контура','<p>Стоит параллельно L2 и C6. На резонансе L и C друг друга «гасят», и сопротивление контура = R3. Значит R3 задаёт <b>максимум K</b> и <b>добротность</b> <span class="f">Q = R/ρ = 1000/80 ≈ 12,5</span>.</p><p>Меньше R3 → меньше Q → шире полоса, но меньше K (вопрос 4).</p>']
+};
+
+function drawScheme(svgId, variant, mode){
+  const V = SCH[variant], res = variant==='res';
+  const fl = (V.flows[mode]||[]).map(([c,d])=>`<path class="flow" stroke="${c}" d="${d}"/>`).join('');
+  const tg = (V.tags[mode]||[]).map(([t,x,y,c])=>`<text class="tag" x="${x}" y="${y}" fill="var(--${c})">${t}</text>`).join('');
+  const load = res
+    ? `${indV(400,70,220,'L2','L2','700 мкГн')}${resV(470,70,220,'R3r','R3','1 кОм')}${capV(540,70,220,'C6','C6','100 нФ')}<path class="w" d="M400,220 H540"/>${dot(470,70)}${dot(400,70)}${dot(470,220)}`
+    : `${resV(470,70,220,'R3','R3','2,7 кОм')}${dot(470,220)}`;
+  $('#'+svgId).innerHTML = `
+    ${fl}
+    <path class="w" d="M60,112 V70 H${res?540:470}"/>
+    <g data-id="V1"><path class="w" d="M42,112 H78" style="stroke-width:2.6"/><path class="w" d="M50,124 H70" style="stroke-width:4"/><path class="w" d="M60,124 V170"/>
+      <text class="lbl b" x="34" y="110" text-anchor="end">V1</text><text class="lbl m" x="34" y="128" text-anchor="end">10 В</text><text class="lbl s" x="82" y="106" fill="var(--muted)">+</text>
+      <rect class="hit" x="0" y="90" width="84" height="50"/></g>${gnd(60,170)}
+    ${capV(150,70,170,'C2','C2','10 нФ')}${gnd(150,170)}${dot(150,70)}
+    ${resV(270,70,300,'R1','R1','20 кОм')}${dot(270,70)}
+    ${resV(270,300,520,'R2','R2','20 кОм')}${dot(270,300)}
+    <g data-id="XFG1"><circle cx="90" cy="420" r="26" fill="var(--card)" stroke="var(--wire)" stroke-width="1.7"/><path class="w" d="M74,420 q8,-14 16,0 q8,14 16,0"/>
+      <text class="lbl b" x="124" y="414">XFG1</text><text class="lbl m" x="124" y="430">генератор</text><text class="lbl m" x="124" y="446">10 мВ, ${res?'частота — Боде':'10 кГц'}</text>
+      <rect class="hit" x="60" y="390" width="160" height="62"/></g>
+    <path class="w" d="M90,394 V300 M90,446 V520 M68,300 H90"/>${flag(44,300,'ВХ','var(--cb)')}${dot(90,300)}
+    ${capH(300,90,270,'C1','C1',V.vals.C1)}
+    <path class="w" d="M270,300 H410"/>
+    <g data-id="Q1">
+      <circle cx="445" cy="300" r="48" fill="none" stroke="var(--wire)" stroke-width="1.3"/>
+      <path class="w" d="M410,266 V334" style="stroke-width:4"/>
+      <path class="w" d="M410,284 L470,252 V220 M410,316 L470,348 V380"/>
+      <path d="M470,348 L453,346 L459,335 Z" fill="var(--wire)"/>
+      <text class="lbl b" x="506" y="296">Q1</text><text class="lbl m" x="506" y="313">2N2222A, n-p-n</text>
+      <text class="lbl s" x="392" y="290" fill="var(--muted)">Б</text><text class="lbl s" x="476" y="244" fill="var(--muted)">К</text><text class="lbl s" x="476" y="364" fill="var(--muted)">Э</text>
+      <rect class="hit" x="395" y="250" width="100" height="100"/></g>
+    ${load}
+    ${capH(220,470,700,'C3','C3',V.vals.C3)}
+    <path class="w" d="M700,220 H936"/><circle cx="942" cy="220" r="6" fill="var(--card)" stroke="var(--wire)" stroke-width="1.7"/>${dot(700,220)}
+    ${capV(700,220,520,'C5','C5','10 нФ')}
+    <path class="w" d="M420,380 H540"/>${dot(470,380)}
+    ${resV(420,380,520,'R4','R4',V.vals.R4,true)}
+    ${capV(540,380,520,'C4','C4','100 нФ')}
+    <path class="w" d="M90,520 H700"/>${gnd(380,520)}${dot(270,520)}${dot(420,520)}${dot(540,520)}
+    <g data-id="XSC1"><rect x="760" y="40" width="150" height="90" rx="6" fill="var(--soft)" stroke="var(--wire)" stroke-width="1.5"/>
+      <rect x="772" y="50" width="86" height="52" rx="3" fill="var(--card)" stroke="var(--line)"/><path d="M776,76 q10,-22 20,0 q10,22 20,0 q10,-22 20,0 q10,22 20,0" fill="none" stroke="var(--ok)" stroke-width="1.6"/>
+      <text class="lbl b" x="760" y="32">XSC1 осциллограф</text><text class="lbl s" x="790" y="124" text-anchor="middle">A</text><text class="lbl s" x="870" y="124" text-anchor="middle">B</text>
+      <rect class="hit" x="756" y="20" width="160" height="114"/></g>
+    <path class="w" d="M790,130 V220"/>${dot(790,220)}<path class="w" d="M870,130 V156"/>${flag(870,168,'ВХ','var(--cb)')}
+    <g data-id="XBP1"><rect x="760" y="300" width="150" height="80" rx="6" fill="var(--soft)" stroke="var(--wire)" stroke-width="1.5"/>
+      <path d="M776,346 H820 q12,0 22,-24 H896" fill="none" stroke="var(--cb)" stroke-width="1.6"/>
+      <text class="lbl b" x="760" y="400">XBP1 плоттер Боде</text><text class="lbl s" x="830" y="318" text-anchor="middle">OUT+</text><text class="lbl s" x="888" y="318" text-anchor="middle">IN+</text>
+      <text class="lbl s" x="835" y="372" text-anchor="middle" fill="var(--muted)">«−» на землю</text>
+      <rect class="hit" x="756" y="296" width="160" height="110"/></g>
+    <path class="w" d="M830,300 V220"/>${dot(830,220)}<path class="w" d="M888,300 V276"/>${flag(888,264,'ВХ','var(--cb)')}
+    <g data-id="XMM"><rect x="760" y="440" width="66" height="54" rx="6" fill="var(--soft)" stroke="var(--wire)" stroke-width="1.5"/><text class="lbl b" x="793" y="472" text-anchor="middle">XMM1</text>
+      <rect x="850" y="440" width="66" height="54" rx="6" fill="var(--soft)" stroke="var(--wire)" stroke-width="1.5"/><text class="lbl b" x="883" y="472" text-anchor="middle">XMM2</text>
+      ${flag(793,520,'ВЫХ','var(--cc)')}${flag(883,520,'ВХ','var(--cb)')}<path class="w" d="M793,494 V509 M883,494 V509"/>
+      <rect class="hit" x="756" y="436" width="164" height="96"/></g>
+    <text class="lbl b" x="954" y="244" text-anchor="end">выход</text>${flag(916,186,'ВЫХ','var(--cc)')}<path class="w" d="M916,197 V220"/>${dot(916,220)}
+    ${tg}`;
+  const s = $('#'+svgId);
+  s.querySelectorAll('.cap').forEach(g => { g.classList.toggle('cap-off', mode==='dc'); g.classList.toggle('cap-ac', mode==='ac' && !['C5','C6'].includes(g.dataset.id)); });
+  return s;
+}
+function setupScheme(svgId, variant, modesId, modeBId, legendId, infoT, infoB, first){
+  const show = id => { const [t,b] = INFO[id]; let body=b;
+    if(variant==='res' && id==='C1') body = '<p><b>В резонансном каскаде C1 = 10 нФ</b> (в 100 раз меньше): сильнее режет низкие частоты и даёт опережение фазы — поэтому на f₀ фаза −97°, а не 180°.</p>'+b;
+    if(variant==='res' && id==='R4') body = '<p><b>В резонансном R4 = 1 кОм</b> → ток 4,15 мА.</p>'+b;
+    $(infoT).innerHTML = t; $(infoB).innerHTML = body; };
+  const draw = m => { const s = drawScheme(svgId, variant, m);
+    s.querySelectorAll('[data-id]').forEach(g => g.onclick = () => show(g.dataset.id));
+    $(modeBId).innerHTML = SCH[variant].text[m]; $(legendId).innerHTML = SCH[variant].legend[m]||''; };
+  $$('#'+modesId+' button').forEach(b => b.onclick = () => { $$('#'+modesId+' button').forEach(x=>x.setAttribute('aria-pressed',x===b)); draw(b.dataset.m); });
+  draw('all'); show(first);
+}
+setupScheme('schSvg','base','schModes','#schModeB','#schLegend','#schInfoT','#schInfoB','Q1');
+setupScheme('resSvgSch','res','resModes','#resModeB','#resLegend','#resInfoT','#resInfoB','L2');
+
+// ---------- ГРАФИК ----------
+function chart(svg, o){
+  const W=640,H=320,L=52,R=14,T=14,B=40;
+  const lx = v => Math.log10(v);
+  const X = v => L + (o.xlog ? (lx(v)-lx(o.x0))/(lx(o.x1)-lx(o.x0)) : (v-o.x0)/(o.x1-o.x0))*(W-L-R);
+  const Y = v => T + (1-(v-o.y0)/(o.y1-o.y0))*(H-T-B);
+  let g='';
+  for(const t of o.xt){ g+=`<line x1="${X(t)}" x2="${X(t)}" y1="${T}" y2="${H-B}" stroke="var(--line)"/><text class="lbl m" x="${X(t)}" y="${H-B+16}" text-anchor="middle">${o.xf(t)}</text>`; }
+  for(let v=o.y0; v<=o.y1+1e-9; v+=o.ys){ g+=`<line x1="${L}" x2="${W-R}" y1="${Y(v)}" y2="${Y(v)}" stroke="var(--line)"/><text class="lbl m" x="${L-6}" y="${Y(v)+4}" text-anchor="end">${fmt(v,1)}</text>`; }
+  g+=`<text class="lbl m" x="${W-R}" y="${H-4}" text-anchor="end">${o.xlab}</text><text class="lbl m" x="6" y="${T+4}">${o.ylab}</text>`;
+  for(const m of (o.marks||[])){
+    if(m.y!==undefined) g+=`<line x1="${L}" x2="${W-R}" y1="${Y(m.y)}" y2="${Y(m.y)}" stroke="var(--amber)" stroke-dasharray="5 4"/><text class="lbl m" x="${W-R-4}" y="${Y(m.y)-5}" text-anchor="end" style="fill:var(--amber)">${m.t}</text>`;
+    if(m.x!==undefined) g+=`<line x1="${X(m.x)}" x2="${X(m.x)}" y1="${T}" y2="${H-B}" stroke="var(--amber)" stroke-dasharray="5 4"/><text class="lbl m" x="${X(m.x)+4}" y="${T+14+(m.dy||0)}" style="fill:var(--amber)">${m.t}</text>`;
+  }
+  for(const s of o.series){
+    const pts = s.x.map((x,i)=>[X(x),Y(Math.max(o.y0,Math.min(o.y1,s.y[i])))]);
+    g+=`<polyline fill="none" stroke="${s.c}" stroke-width="${s.w||2.2}" points="${pts.map(p=>p.join(',')).join(' ')}"/>`;
+    if(s.dots!==false) g+=pts.map(p=>`<circle cx="${p[0]}" cy="${p[1]}" r="3" fill="${s.c}"/>`).join('');
+  }
+  g+=`<line class="cur" y1="${T}" y2="${H-B}" stroke="var(--ink)" opacity="0" stroke-width="1"/><rect class="ov" x="${L}" y="${T}" width="${W-L-R}" height="${H-T-B}" fill="transparent"/>`;
+  svg.innerHTML = g;
+  const ov = svg.querySelector('.ov'), cur = svg.querySelector('.cur');
+  ov.onmousemove = e => {
+    const r = svg.getBoundingClientRect(); const px = (e.clientX-r.left)/r.width*W;
+    const fr = (px-L)/(W-L-R);
+    const xv = o.xlog ? Math.pow(10, lx(o.x0)+fr*(lx(o.x1)-lx(o.x0))) : o.x0+fr*(o.x1-o.x0);
+    cur.setAttribute('x1',px); cur.setAttribute('x2',px); cur.setAttribute('opacity',.5);
+    const parts = o.series.map(s => {
+      const xs = s.x; let i = xs.findIndex(x=>x>=xv); if(i<=0) i = i<0? xs.length-1 : 1;
+      const a = lx(xs[i-1]), b2 = lx(xs[i]), t = (lx(xv)-a)/(b2-a);
+      const yv = s.y[i-1] + Math.max(0,Math.min(1,t))*(s.y[i]-s.y[i-1]);
+      return `<b style="color:${s.c}">${s.n}</b>: ${fmt(yv,1)} дБ (K ≈ ${fmt(Math.pow(10,yv/20),2)})`;
+    });
+    o.read.innerHTML = `${o.xf2(xv)} → ` + parts.join(' · ');
+  };
+  ov.onmouseleave = () => cur.setAttribute('opacity',0);
+}
+const dB = k => 20*Math.log10(k);
+
+// ---------- 3. АЧХ ----------
+const F1=[100,200,300,500,700,1000,2000,3000,5000,10000,20000,30000,50000,70000,100000];
+const Kb=[0.534,0.619,0.678,0.817,0.983,1.262,2.261,3.228,4.881,7.337,8.824,9.104,8.933,8.476,7.644];
+const Kc1=[0.005,0.011,0.018,0.035,0.055,0.093,0.244,0.399,0.703,1.436,2.837,4.125,6.169,7.324,7.637];
+const Kc3=[0.049,0.057,0.062,0.075,0.090,0.116,0.213,0.313,0.515,1.018,1.972,2.814,4.082,4.817,5.222];
+const Kc3b=[0.533,0.617,0.676,0.814,0.981,1.259,2.256,3.220,4.872,7.329,8.820,9.102,8.933,8.476,7.643];
+const FC4=[100,300,1000,3000,10000,30000,100000];
+const C4d=[['нет','var(--bad)',[0.537,0.609,0.616,0.586,0.403,0.170,0.0527]],['10 нФ','var(--amber)',[0.536,0.609,0.624,0.668,0.847,0.957,0.975]],['100 нФ (база)','var(--ink)',[0.534,0.678,1.26,3.23,7.34,9.10,7.64]],['1 мкФ','var(--cb)',[0.918,2.67,8.81,25.2,54.1,36.7,12.3]],['10 мкФ','var(--ce)',[2.82,8.51,28.1,76.9,99.0,40.7,12.5]]];
+const xfF = t => t>=1000? (t/1000)+'к' : t;
+const achSets = {
+  base:{t:'Базовая АЧХ (рис. 3.1–3.3, табл. 3.1)', ys:[-10,25], series:[{n:'C1 = C3 = 1 мкФ, C4 = 100 нФ',c:'var(--ink)',x:F1,y:Kb.map(dB)}], marks:[{y:dB(9.116*0.707),t:'0,707·Kmax = 6,45 (16,2 дБ)'},{x:7667,t:'fн ≈ 7,7 кГц'},{x:33318,t:'Kmax 9,12 @ 33 кГц',dy:16}],
+    text:`<p><b>Результат:</b> K<sub>max</sub> = 9,12 (19,2 дБ) на ≈ 33 кГц. Полоса по уровню 0,707·K<sub>max</sub>: <b>7,7…144 кГц</b> (верхняя граница за краем графика 100 кГц — посчитана моделью).</p>
+      <p><b>Слева спад</b> в основном из-за <b>C4</b>: на низких частотах X<sub>C4</sub> большой, R4 перестаёт быть закорочен, включается ООС, и K падает до 0,53 на 100 Гц. Проверь в таблице X<sub>C</sub> ниже: на 100 Гц у C4 (100 нФ) ≈ 16 кОм — это «разрыв» по сравнению с R4 = 2 кОм.</p>
+      <p><b>Справа спад</b> — C5 и ёмкости транзистора.</p>
+      <p><b>Почему так мало (9, а не 100):</b> U<sub>КЭ</sub> = 0,18 В — граница насыщения (вкладка 4).</p>
+      <p><b>Осциллограмма (рис. 3.3), 10 кГц:</b> вход 10 мВ, выход ≈ 73 мВ (K = 7,3), <b>в противофазе</b>: максимум входа = минимум выхода. Полуволны чуть разные (+75 / −71 мВ, Kг 6,2 %): край насыщения подрезает нижнюю полуволну.</p>
+      <p class="show">[показать] скрин Боде рис. 3.1: курсор 33,8 кГц → 19,2 дБ. Осциллограф рис. 3.3: A (выход) и B (вход) в противофазе.</p>`},
+  c1:{t:'Разделительный C1: 5 нФ против 1 мкФ (рис. 3.4–3.5, табл. 3.2)', ys:[-50,25], series:[{n:'C1 = 1 мкФ',c:'var(--ink)',x:F1,y:Kb.map(dB)},{n:'C1 = 5 нФ',c:'var(--bad)',x:F1,y:Kc1.map(dB)}], marks:[{x:41800,t:'fн 41,8 кГц (5 нФ)'}],
+    text:`<p>C1 и входное сопротивление каскада (R1‖R2 ≈ 10 кОм ‖ вход транзистора) — это <b>ФВЧ</b>: делитель «конденсатор сверху, резистор снизу», как в ЛР-3.</p>
+      <p>C1 уменьшили в 200 раз, значит X<sub>C1</sub> в 200 раз больше. На низких частотах почти весь сигнал «падает» на C1, до базы доходит мало.</p>
+      <p><b>Числа:</b> на 1 кГц K = 0,09 вместо 1,26 (−20,6 дБ). f<sub>н</sub>: 7,7 → <b>41,8 кГц</b>, K<sub>max</sub>: 9,12 → 7,68. К 100 кГц кривые сходятся: там X<sub>C</sub> мал даже у 5 нФ (≈ 320 Ом).</p>
+      <p class="show">[показать] скрин рис. 3.4: 1,019 кГц → −20,4 дБ.</p>
+      <p>Проверь таблицу X<sub>C</sub> ниже: поставь 1 кГц, у C1 = 5 нФ X<sub>C</sub> ≈ 32 кОм — больше, чем 10 кОм входа, сигнал делится.</p>`},
+  c3:{t:'Разделительный C3: 1 нФ против 0,8 мкФ (рис. 3.6–3.7, табл. 3.3)', ys:[-30,25], series:[{n:'C3 = 0,8 мкФ',c:'var(--ink)',x:F1,y:Kc3b.map(dB)},{n:'C3 = 1 нФ',c:'var(--bad)',x:F1,y:Kc3.map(dB)}], marks:[{x:43000,t:'fн 43 кГц (1 нФ)'}],
+    text:`<p>C3 (последовательно) и C5 = 10 нФ (на землю) — <b>ёмкостный делитель</b> на выходе. Сигнал делится пропорционально их X<sub>C</sub>.</p>
+      <p>C3 = 1 нФ: на 10 кГц X<sub>C3</sub> ≈ 15,9 кОм, X<sub>C5</sub> ≈ 1,6 кОм, почти весь сигнал падает на C3. K<sub>max</sub> = 5,24, f<sub>н</sub> ≈ 43 кГц.</p>
+      <p class="show">[показать] скрин рис. 3.6: 10,1 кГц → 0,25 дБ (K ≈ 1).</p>
+      <p>C3 = 0,8 мкФ: X<sub>C3</sub> ≪ X<sub>C5</sub> на всех частотах, АЧХ как при 1 мкФ.</p>
+      <p><b>Вывод:</b> разделительные конденсаторы должны быть большими, чтобы не резать нижние частоты рабочего диапазона.</p>`},
+  c4:{t:'Блокировочный C4: от 0 до 10 мкФ (рис. 3.8–3.9, табл. 3.4–3.5)', ys:[-30,45], series:C4d.map(([n,c,k])=>({n:'C4 '+n,c,x:FC4,y:k.map(dB)})),
+    text:`<p>C4 закорачивает R4 для сигнала. Чем больше C4, тем меньше X<sub>C4</sub>, тем лучше закорочен R4, тем меньше ООС. Итог — <b>больше K</b>, и f<sub>н</sub> уходит влево.</p>
+      <div class="scroll"><table><tr><th>C4</th><th>K на 10 кГц</th><th>U<sub>вых</sub> + / −, мВ</th><th>Kг</th><th class="l">форма</th></tr>
+      <tr><td>нет</td><td>0,40</td><td>4,1 / 3,8</td><td>3,5 %</td><td class="l">синус</td></tr><tr><td>10 нФ</td><td>0,85</td><td>8,6 / 8,4</td><td>3,4 %</td><td class="l">синус</td></tr><tr><td>100 нФ</td><td>7,34</td><td>75 / 71</td><td>6,2 %</td><td class="l">слабые искажения</td></tr><tr><td>1 мкФ</td><td>54,1</td><td>544 / 452</td><td>13,9 %</td><td class="l">искажена</td></tr><tr><td>10 мкФ</td><td>99,0</td><td>847 / 787</td><td>11,3 %</td><td class="l">искажена</td></tr></table></div>
+      <p><b>Без C4 K &lt; 1:</b> весь переменный ток эмиттера идёт через R4, на нём повторяется почти весь вход (ООС), U<sub>БЭ</sub> почти не качается. Оценка K ≈ R3/R4 = 1,35, а у нас ещё меньше (0,4–0,6): у края насыщения часть тока коллектора теряется.</p>
+      <div class="box warn">В отчёте есть и 0,53, и 0,62, и это не путаница: 0,53 — K <b>на 100 Гц</b> (там и C4 = 100 нФ почти разрыв), 0,62 — K <b>без C4</b> в середине (≈ 1 кГц).</div>
+      <p><b>Искажения (рис. 3.9, C4 = 1 мкФ):</b> выход уже сотни мВ (+544 / −452), выходит за линейный участок, полуволны разные, сигнал не гармонический. Лечится уменьшением входного сигнала. Это и ответ на вопрос 10 «как получить нелинейный сигнал».</p>
+      <p class="hint">Kг — коэффициент гармоник: насколько сигнал отличается от чистого синуса (доля высших гармоник, ЛР-4).</p>`}
+};
+function achDraw(k){
+  const s = achSets[k];
+  $('#achTitle').textContent = s.t; $('#achText').innerHTML = s.text;
+  chart($('#achSvg'), {xlog:true, x0:100, x1:100000, xt:[100,300,1000,3000,10000,30000,100000], xf:xfF, xf2:fmtF, xlab:'f, Гц (лог)', ylab:'K, дБ', y0:s.ys[0], y1:s.ys[1], ys:(s.ys[1]-s.ys[0])>50?10:5, series:s.series, marks:s.marks, read:$('#achRead')});
+  $('#achLeg').innerHTML = s.series.map(x=>`<span><i style="border-color:${x.c};border-top-style:solid"></i>${x.n}</span>`).join('');
+}
+$$('#achSets button').forEach(b => b.onclick = () => { $$('#achSets button').forEach(x=>x.setAttribute('aria-pressed',x===b)); achDraw(b.dataset.s); });
+achDraw('base');
+const caps = [['C1 (1 мкФ)',1e-6,'вход ≈ 10 кОм'],['C1 (5 нФ)',5e-9,'вход ≈ 10 кОм'],['C3 (1 мкФ)',1e-6,'C5'],['C3 (1 нФ)',1e-9,'C5'],['C5 (10 нФ)',1e-8,'—'],['C4 (100 нФ)',1e-7,'R4 = 2 кОм'],['C4 (10 мкФ)',1e-5,'R4 = 2 кОм']];
+function xcUpd(){
+  const f = Math.pow(10, +$('#fx').value); $('#fxO').textContent = fmtF(f);
+  const xc5 = 1/(2*Math.PI*f*1e-8);
+  $('#xcTab').innerHTML = '<tr><th>Конденсатор</th><th>X<sub>C</sub></th><th class="l">в паре с</th><th class="l">ведёт себя как</th></tr>' + caps.map(([n,c,cmp])=>{
+    const x = 1/(2*Math.PI*f*c);
+    const ref = cmp.startsWith('вход') ? 1e4 : cmp.startsWith('R4') ? 2000 : cmp==='C5' ? xc5 : null;
+    let v = '<span class="mut">шунт выхода: чем меньше X, тем сильнее режет верх</span>';
+    if(ref){ v = x < ref/5 ? '<span class="ok">≈ провод</span>' : x > ref*5 ? '<span class="bad">≈ разрыв</span>' : '<span class="amb">середина — тут и спад</span>'; if(cmp==='C5') v += ` <span class="mut">(X<sub>C5</sub> = ${fmtR(xc5)})</span>`; }
+    return `<tr><td>${n}</td><td>${fmtR(x)}</td><td class="l">${cmp}</td><td class="l">${v}</td></tr>`;
+  }).join('');
+}
+$('#fx').oninput = xcUpd; xcUpd();
+
+// ---------- 4. R4 ----------
+const R4d = [
+  ['0,5 кОм',2.33,1.66,1.73,3.33,0.07,'насыщение',0.62,0.86],
+  ['1 кОм',3.45,2.79,2.88,2.79,0.08,'насыщение',0.64,1.24],
+  ['2 кОм',4.84,4.20,4.38,2.10,0.18,'насыщение',1.26,7.34],
+  ['3 кОм',4.93,4.29,6.15,1.43,1.86,'активный',1.85,8.43],
+  ['5 кОм',4.96,4.34,7.67,0.87,3.33,'активный',1.72,8.33],
+  ['10 кОм',4.98,4.37,8.82,0.44,4.45,'активный',1.66,7.95]];
+const r4txt = [
+  'R4 маленький — ток большой (3,3 мА), на R3 падает 3,3·2,7 ≈ 9 В, коллектор опустился почти до эмиттера (U_КЭ = 0,07 В). Глубокое насыщение: K < 1. U_Б тоже просел (2,33 В): в насыщении база берёт большой ток и нагружает делитель.',
+  'Всё ещё насыщение: U_КЭ = 0,08 В, K на 10 кГц всего 1,24.',
+  'Схема методички: U_КЭ = 0,18 В — край насыщения. Транзистор только начинает усиливать: K = 7,34 на 10 кГц. Это наш базовый случай.',
+  'Ток 1,43 мА, на R3 падает 3,85 В, U_К = 6,15 В, U_КЭ = 1,86 В. Активный режим! Выход может качаться в обе стороны. K = 8,43 — максимум в таблице.',
+  'Активный, U_КЭ = 3,33 В — ближе к середине. K почти тот же (8,33): для сигнала R4 закорочен C4, поэтому сам R4 на K почти не влияет, только на рабочую точку.',
+  'Ток всего 0,44 мА, U_КЭ = 4,45 В. Активный, K = 7,95 — чуть меньше: при малом токе у транзистора меньше крутизна (S ≈ I_К/26 мВ).'];
+function r4Upd(){
+  const i = +$('#r4s').value, d = R4d[i];
+  $('#r4O').textContent = d[0];
+  const sat = d[6]==='насыщение';
+  $('#r4Mode').innerHTML = `<span class="${sat?'amb':'ok'}">${d[6]}</span> · U<sub>КЭ</sub> = ${fmt(d[5],2)} В · K(10 кГц) = ${fmt(d[8],2)}`;
+  $('#r4Text').textContent = r4txt[i];
+  const W=640,H=300,T=24,B=40,L=60; const Y = v => T + (1 - v/10)*(H-T-B);
+  const bars = [['+E_п',10,'var(--muted)'],['U_К',d[3],'var(--cc)'],['U_Б',d[1],'var(--cb)'],['U_Э',d[2],'var(--ce)']];
+  let g=''; for(let v=0;v<=10;v+=2) g+=`<line x1="${L}" x2="${W-10}" y1="${Y(v)}" y2="${Y(v)}" stroke="var(--line)"/><text class="lbl m" x="${L-8}" y="${Y(v)+4}" text-anchor="end">${v} В</text>`;
+  bars.forEach(([n,v,c],k)=>{ const x=L+30+k*120; g+=`<rect x="${x}" y="${Y(v)}" width="70" height="${Y(0)-Y(v)}" fill="${c}" opacity=".75" rx="4"/><text class="lbl b" x="${x+35}" y="${Y(v)-6}" text-anchor="middle">${fmt(v,2)}</text><text class="lbl" x="${x+35}" y="${H-B+18}" text-anchor="middle">${n}</text>`; });
+  const xk = L+30+120+70, xe = L+30+3*120;
+  g+=`<path d="M${xk},${Y(d[3])} H${xe+70}" stroke="var(--ink)" stroke-dasharray="3 3"/><text class="tag" x="${xe+76}" y="${(Y(d[3])+Y(d[2]))/2+4}" fill="var(--ink)">U_КЭ = ${fmt(d[5],2)}</text>`;
+  $('#r4Svg').innerHTML = g;
+  $('#r4Tab').innerHTML = '<tr><th>R4</th><th>U<sub>Б</sub></th><th>U<sub>Э</sub></th><th>U<sub>К</sub></th><th>I<sub>К</sub>, мА</th><th>U<sub>КЭ</sub></th><th>режим</th><th>K 1к</th><th>K 10к</th></tr>' + R4d.map((r,k)=>`<tr class="${k===i?'cur':''}">${r.map(v=>`<td>${typeof v==='number'?fmt(v,2):v}</td>`).join('')}</tr>`).join('');
+}
+$('#r4s').oninput = r4Upd; r4Upd();
+let ts = -1;
+const tsShow = () => $$('#tsSteps li').forEach((li,k)=>li.classList.toggle('step-on', k===ts));
+$('#tsNext').onclick = () => { ts = (ts+1)%5; tsShow(); };
+$('#tsReset').onclick = () => { ts = -1; tsShow(); };
+
+// ---------- 5. RES ----------
+const F4=[5,10,14,16,17,17.5,18,18.25,18.5,19,19.5,20,22,25,30,50];
+const K4=[0.06,0.34,1.12,2.54,4.61,6.69,9.30,9.79,9.24,7.00,5.29,4.22,2.44,1.66,1.23,0.89];
+function resDraw(){
+  const L=+$('#lS').value*1e-6, C=+$('#cS').value*1e-9, R=+$('#rS').value;
+  $('#lO').textContent = fmt(L*1e6,0)+' мкГн'; $('#cO').textContent = fmt(C*1e9,1)+' нФ'; $('#rO').textContent = fmtR(R);
+  const f0 = 1/(2*Math.PI*Math.sqrt(L*C)), rho = Math.sqrt(L/C), Q = R/rho, df = f0/Q;
+  $('#rf0').textContent = fmtF(f0); $('#rrho').textContent = fmt(rho,1)+' Ом'; $('#rq').textContent = fmt(Q,2); $('#rdf').textContent = fmtF(df);
+  const Kmax = 9.79*R/1000, xs=[], ys=[];
+  for(let i=0;i<=240;i++){ const f = 5000*Math.pow(10, i/240); const k = Kmax/Math.sqrt(1+Q*Q*Math.pow(f/f0-f0/f,2)); xs.push(f/1000); ys.push(dB(Math.max(k,1e-3))); }
+  chart($('#resSvg'), {xlog:true, x0:5, x1:50, xt:[5,10,14,18,22,30,50], xf:t=>t+'к', xf2:t=>fmt(t,2)+' кГц', xlab:'f, кГц (лог)', ylab:'K, дБ', y0:-30, y1:30, ys:10,
+    series:[{n:'табл. 3.7',c:'var(--cc)',x:F4,y:K4.map(dB)},{n:'формула',c:'var(--cb)',x:xs,y:ys,dots:false,w:1.6}],
+    marks:[{y:dB(9.79*0.707),t:'0,707·Kmax (−3 дБ)'},{x:18.24,t:'f0 = 18,24 кГц'}], read:$('#resRead')});
+}
+['#lS','#cS','#rS'].forEach(id => $(id).oninput = resDraw);
+$('#resReset').onclick = () => { $('#lS').value=700; $('#cS').value=109.1; $('#rS').value=1000; resDraw(); };
+$('#resWide').onclick = () => { $('#lS').value=700; $('#cS').value=109.1; $('#rS').value=330; resDraw(); };
+resDraw();
+
+// ---------- 6. ВОПРОСЫ ----------
+const Q1 = [
+ ['1. Какой из усилителей ОЭ, ОБ, ОК потребляет от источника сигнала минимальный ток, а какой — максимальный?','<b>Минимальный — ОК</b> (эмиттерный повторитель): вход в базу, а резистор в эмиттере «поднимает» входное сопротивление примерно до β·R<sub>э</sub> — очень большое. <b>Максимальный — ОБ</b>: вход в эмиттер, входной ток — это весь I<sub>Э</sub>, входное сопротивление маленькое (десятки Ом). ОЭ посередине: входной ток = I<sub>Б</sub>, в β раз меньше I<sub>Э</sub>.'],
+ ['2. Резистивный или резонансный — для речи, а какой — для телестанции? Что будет при ошибке?','<b>Речь — резистивный</b>: у речи широкий спектр (≈ 300 Гц…3,4 кГц), нужна широкая ровная полоса. <b>Телестанция — резонансный</b>: нужно выделить несущую своего канала и не пустить соседние. Ошибка: резонансный для речи пропустит узкую полоску частот, речь исказится и станет неразборчивой. Резистивный для ТВ усилит все станции и шумы сразу — нет избирательности.'],
+ ['3. Как используется резонанс параллельного контура для резонансного усилителя?','Контур ставят нагрузкой коллектора вместо R<sub>к</sub>. На f<sub>0</sub> = 1/(2π√LC) сопротивление параллельного контура <b>максимально</b> (≈ R3), а K ≈ S·Z<sub>н</sub>, поэтому <b>максимум усиления</b>. Ниже f<sub>0</sub> контур закорачивает L, выше — C, K мал. У нас f<sub>0</sub> = 18,24 кГц, K<sub>max</sub> = 9,79.'],
+ ['4. Как увеличить полосу пропускания резонансного усилителя?','Δf = f<sub>0</sub>/Q, Q = R/ρ, значит нужно <b>уменьшить добротность</b>: поставить параллельно контуру резистор поменьше (вкладка 5, кнопка R = 330 Ом: Δf ≈ 4,4 кГц, но K тоже меньше). Или увеличить ρ = √(L/C): больше L и меньше C при той же f<sub>0</sub>. Ещё способ — несколько каскадов с немного расстроенными контурами.'],
+ ['5. Способ регулировки коэффициента усиления каскада.','1) <b>Неполное шунтирование R<sub>э</sub></b>: часть R4 оставить без C4, это местная ООС, K ≈ R<sub>к</sub>/R<sub>э,незашунт</sub>. 2) Менять C4 (табл. 3.4: K от 0,4 до 99 на 10 кГц). 3) Менять R<sub>к</sub> (K растёт с R<sub>к</sub>). 4) Менять рабочую точку (ток) — меняется крутизна. На практике — потенциометр на входе.'],
+ ['6. Что такое температурная стабилизация параметров?','Сохранение <b>рабочей точки</b> (I<sub>К0</sub>, U<sub>КЭ0</sub>) неизменной при изменении температуры. При нагреве растёт обратный ток I<sub>КБО</sub>, растёт β, падает нужное U<sub>БЭ</sub> (~2 мВ/°C), ток коллектора «уплывает» вверх и может увести в насыщение. Стабилизация это компенсирует. Заодно она спасает при замене транзистора на экземпляр с другим β.'],
+ ['7. Как работает схема стабилизации?','Делитель R1–R2 держит U<sub>Б</sub> постоянным. Нагрев → I<sub>К</sub>↑ → I<sub>Э</sub>↑ → U<sub>Э</sub> = I<sub>Э</sub>·R4 ↑ → U<sub>БЭ</sub> = U<sub>Б</sub> − U<sub>Э</sub> ↓ → транзистор подзакрылся → I<sub>К</sub>↓. Это <b>ООС по постоянному току</b>, простейшая система автоматического регулирования. C4 убирает эту ООС для сигнала, чтобы не терять усиление.'],
+ ['8. Как изменится выходной сигнал, если уменьшать (увеличивать) C4?','<b>Уменьшать:</b> X<sub>C4</sub> растёт, R4 зашунтирован хуже, ООС действует на сигнал, K падает (без C4 K ≈ 0,4–0,6), f<sub>н</sub> растёт, форма — чистый синус (ООС линеаризует). <b>Увеличивать:</b> K растёт (1 мкФ — 54, 10 мкФ — 99 на 10 кГц), полоса расширяется вниз, но выход уже сотни мВ, появляются <b>искажения</b> (Kг 11–14 %, полуволны разные).'],
+ ['9. Как рассчитывается напряжение смещения на базе (по схеме)?','Делитель: <span class="f">U<sub>Б</sub> = E<sub>п</sub>·R2/(R1+R2) = 10·20/(20+20) = 5 В</span> без учёта тока базы. Реально 4,84 В: часть тока делителя уходит в базу. Дальше U<sub>Э</sub> = U<sub>Б</sub> − 0,65 ≈ 4,2 В, I<sub>Э</sub> = 4,2/2 кОм = 2,1 мА.'],
+ ['10. Как получить нелинейный сигнал на выходе?','Вывести транзистор за линейный участок: 1) <b>большой входной сигнал</b> (> 0,1 В); 2) <b>большое K</b> при том же входе — у нас C4 ≥ 1 мкФ при 10 мВ уже искажает (рис. 3.9); 3) <b>рабочая точка у края</b> — у насыщения (малый R4) или у отсечки (малое смещение), тогда одна полуволна срезается.']
+];
+const Q2 = [
+ ['Открой схему. Что это за элемент? (на любой)','Вкладка 2: на каждую деталь одна фраза роли. Обязательно: Q1 — n-p-n, стрелка эмиттера наружу; R1/R2 — делитель смещения; R3 — нагрузка; R4/C4 — термостабилизация и блокировка; C1/C3 — разделительные; C5 — шунт на ВЧ.'],
+ ['Почему у вас такое маленькое усиление?','U<sub>КЭ</sub> = 0,18 В — транзистор на границе насыщения при номиналах методички (I = 2,1 мА, на R3 падает 5,6 В из 10). При R4 = 3 кОм U<sub>КЭ</sub> = 1,86 В — активный режим. В насыщении ток упирается в R3 и почти не управляется базой.'],
+ ['Почему выход в противофазе?','Вход ↑ → I<sub>К</sub> ↑ → падение на R3 ↑ → U<sub>К</sub> = E<sub>п</sub> − I<sub>К</sub>R3 ↓. <span class="show">[показать] на осциллограмме рис. 3.3: максимум канала B (вход) = минимум канала A (выход).</span>'],
+ ['Покажи на АЧХ полосу пропускания.','Уровень 0,707·K<sub>max</sub> (на 3 дБ ниже максимума): 19,2 − 3 = 16,2 дБ. Пересечения — f<sub>н</sub> ≈ 7,7 кГц и f<sub>в</sub> ≈ 144 кГц. <span class="show">[показать] рис. 3.2 / 3.1.</span>'],
+ ['Чем определяется спад АЧХ на низких и высоких частотах?','Низкие — конденсаторы C1, C3, C4 (X<sub>C</sub> = 1/(2πfC) растёт), у нас главный — C4. Высокие — C5 и ёмкости переходов транзистора (их X<sub>C</sub> мал, они закорачивают сигнал).'],
+ ['Почему без C4 усиление меньше 1?','Весь переменный ток эмиттера идёт через R4, на нём почти всё входное напряжение, и U<sub>БЭ</sub> почти не меняется (ООС по току). Оценка K ≈ R3/R4 = 1,35, а у края насыщения ещё меньше (0,4–0,6).'],
+ ['Что такое дБ и почему 0,707?','K<sub>дБ</sub> = 20·lg K. 0,707 = 1/√2: напряжение в √2 раз меньше, мощность в 2 раза меньше, это −3 дБ.'],
+ ['Как посчитали f0 теоретически и почему не 19 кГц?','f<sub>0</sub> = 1/(2π√(LC)). Только C6 — 19,02 кГц. Но через C3 параллельно контуру подключён C5: 100 нФ и 10 нФ последовательно = 9,09 нФ, всего C = 109,1 нФ → 18,21 кГц, совпало с графиком (18,24).'],
+ ['Что такое рабочая точка и зачем смещение?','Рабочая точка — постоянные ток и напряжения транзистора без сигнала (I<sub>К0</sub> = 2,1 мА, U<sub>КЭ0</sub> = 0,18 В). Смещение (≈ 0,65 В на Б–Э от делителя) заранее приоткрывает транзистор. Без него транзистор закрыт (отсечка), и сигнал 10 мВ его не откроет.'],
+ ['Почему усилитель называется апериодическим?','Нагрузка — резистор, катушек нет, значит нет колебательных процессов (резонансов), и АЧХ широкая и плавная. Резонансный — наоборот, с контуром LC.']
+];
+const qHtml = arr => arr.map(([q,a])=>`<details><summary>${q}</summary><div style="font-size:15px">${a}</div></details>`).join('');
+$('#qList').innerHTML = qHtml(Q1); $('#qList2').innerHTML = qHtml(Q2);
+</script>
+</body>
+</html>
